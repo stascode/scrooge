@@ -1,0 +1,289 @@
+public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TAbstractBase, ThriftStruct, IEquatable<{{name}}>
+{
+    {{#fields}}
+    {{>generate_optional_field_type}} {{name}};
+    {{/fields}}
+    {{#false}}
+    {{#i_4}}{{>generate_field_name_constants}}{{/i_4}}
+
+    {{#i_4}}{{>generate_csharp_meta_data_map}}{{/i_4}}
+    {{/false}}
+
+    public {{name}}()
+    {
+        {{#consolidate_newlines}}
+        {{#default_fields}}
+        {{{print_const}}}
+        {{/default_fields}}
+        {{/consolidate_newlines}}
+    }
+
+    {{#has_fields}}
+    public {{name}}(
+      {{#fields}}
+      {{>generate_optional_field_type}} {{name}}{{^last}},{{/last}}
+      {{/fields}}
+      ) : this()
+    {
+        {{#fields}}
+        this.{{name}} = {{name}};
+        {{/fields}}
+    }
+
+    {{/has_fields}}
+    {{#non_default_constructor}}
+    public {{name}}(
+      {{#non_optional_fields}}
+      {{{field_type.type_name}}} {{name}}{{^last}},{{/last}}{{#last}}) : this(){{/last}}
+      {{/non_optional_fields}}
+    {
+        {{#non_optional_fields}}
+        this.{{name}} = {{name}};
+        {{/non_optional_fields}}
+    }
+
+    {{/non_default_constructor}}
+    /// Performs a deep copy on <i>other</i>.
+    {{name}}({{name}} other)
+    {
+        {{#consolidate_newlines}}
+        {{#fields}}
+        {{>generate_field_deep_copy}}
+        {{/fields}}
+        {{/consolidate_newlines}}
+    }
+
+    public static {{name}} DeepCopy({{name}} other) => new {{name}}(other);
+
+    {{#fields}}
+    public {{>generate_optional_field_type}} {{>cap_name}}
+    {
+        get { return this.{{name}}; }
+        set { this.{{name}} = value; }
+    }
+
+    {{/fields}}
+
+    public override bool Equals(object that) => this.Equals(that as {{struct_type_name}});
+
+    public bool Equals({{struct_type_name}} that)
+    {
+        if (that == null)
+            return false;
+        {{#fields}}
+        {{>generate_field_equality_check}}
+        {{/fields}}
+
+        return true;
+    }
+
+    {{# gen_hash_code }}
+    public override int GetHashCode()
+    {
+        {{#gen_hash_code}}
+        return HashCodeBuilder.Create()
+        {{#fields}}
+            .Append{{#trim}}
+            {{#field_type.is_binary}}Binary{{/field_type.is_binary}}
+            {{^field_type.is_binary}}
+            {{#field_type.nullable}}Object{{/field_type.nullable}}
+            {{^field_type.nullable}}Value{{/field_type.nullable}}
+            {{/field_type.is_binary}}
+            {{/trim}}({{name}}{{#field.optional}}.OrDefault(){{/field.optional}})
+        {{/fields}}
+            .GetHashCode();
+        {{/gen_hash_code}}
+        {{^gen_hash_code}}
+        return 0;
+        {{/gen_hash_code}}
+    }
+    {{/ gen_hash_code }}
+
+    {{#consolidate_newlines}}
+    public void Write(TProtocol oprot)
+    {
+        this.Validate();
+        <br/>
+        oprot.WriteStructBegin(ThriftCodec.STRUCT_DESC);
+        {{#sorted_fields}}
+        {{#field_type.nullable}}
+        if (this.{{name}} != null)
+        {
+            {{/field_type.nullable}}
+
+            {{#field.i_if_nullable}}
+            {{#field.optional}}
+            {{{field_type.type_name}}} {{name}};
+            if (this.{{name}}.TryGet(out {{name}}))
+            {
+                {{/field.optional}}
+
+                {{#field.i_if_optional}}
+                oprot.WriteFieldBegin(ThriftCodec.{{#constant_name}}{{name}}{{/constant_name}}_FIELD_DESC);
+
+                {{#i_4}}{{{serialize_field}}}{{/i_4}}
+
+                oprot.WriteFieldEnd();
+
+                {{/field.i_if_optional}}
+
+                {{#field.optional}}
+            }
+            {{/field.optional}}
+            {{/field.i_if_nullable}}
+
+            {{#field_type.nullable}}
+        }
+        {{/field_type.nullable}}
+        {{/sorted_fields}}
+
+        oprot.WriteFieldStop();
+        oprot.WriteStructEnd();
+    }
+    {{/consolidate_newlines}}
+
+    public override string ToString()
+    {
+        {{#consolidate_newlines}}
+        var sb = new StringBuilder("{{name}}(");
+        bool first = true;
+
+        {{#fields}}
+        {{^field.optional}}
+        var {{name}} = this.{{name}};
+        {{/field.optional}}
+        {{#field.optional}}
+        {{{field_type.type_name}}} {{name}};
+        if (this.{{name}}.TryGet(out {{name}}))
+        {
+            {{/field.optional}}
+            {{#field.i_if_optional}}
+            {{^first}}
+            if (!first) sb.Append(", ");
+            {{/first}}
+            sb.Append("{{name}}:");
+            {{#field_type.nullable}}
+            if ({{name}} == null)
+            {
+                sb.Append("null");
+            }
+            else
+            {
+                {{/field_type.nullable}}
+
+                {{#field.i_if_nullable}}
+                {{#field_type.is_binary}}
+                ThriftUtil.AppendBinaryDump({{name}}, sb);
+                {{/field_type.is_binary}}
+                {{^field_type.is_binary}}
+                sb.Append({{name}});
+                {{/field_type.is_binary}}
+                {{/field.i_if_nullable}}
+
+                {{#field_type.nullable}}
+            }
+            {{/field_type.nullable}}
+            first = false;
+            {{#field.optional}}
+        }
+        {{/field.optional}}
+        {{/field.i_if_optional}}
+        {{/fields}}
+        sb.Append(")");
+        return sb.ToString();
+        {{/consolidate_newlines}}
+    }
+
+    public void Validate()
+    {
+        {{#consolidate_newlines}}
+        // check for required fields
+        {{#fields}}
+        {{#field.required}}
+        {{#field_type.nullable}}
+        if ({{name}} == null)
+        {
+            throw new TProtocolException("Required field '{{name}}' was not present! Struct: " + this.ToString());
+        }
+        {{/field_type.nullable}}
+        {{^field_type.nullable}}
+        // alas, we cannot check '{{name}}' because it's a primitive.
+        {{/field_type.nullable}}
+        {{/field.required}}
+        {{/fields}}
+        {{/consolidate_newlines}}
+    }
+
+    public static readonly ThriftCodec Codec = new ThriftCodec(); 
+    
+    public partial class ThriftCodec : ThriftStructCodec3<{{name}}>
+    {
+        {{#i_4}}{{>generate_struct_desc}}{{/i_4}}
+        {{#i_4}}{{>generate_field_descs}}{{/i_4}}
+
+    public override {{name}} Decode(TProtocol iprot)
+    {
+        TField field;
+        iprot.ReadStructBegin();
+
+        {{#fields}}
+        {{#field.optional}}
+            var {{name}} = Option.None<{{{field_type.type_name}}}>();
+        {{/field.optional}}
+        {{^field.optional}}
+            var {{name}} = default({{{field_type.type_name}}});
+        {{#field.required}}
+            bool __is_{{name}}_set = false;
+        {{/field.required}}
+        {{/field.optional}}
+        {{/fields}}
+        while (true)
+        {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop)
+            {
+                break;
+            }
+            switch (field.ID)
+            {
+                {{#fields}}
+                case {{key}}: // {{#constant_name}}{{name}}{{/constant_name}}
+                    if (field.Type != {{field_type.to_enum}})
+                    {
+                        throw new TProtocolException($"Received wrong type for field '{{name}}' (expected={this.TTypeToString({{field_type.to_enum}})}, actual={this.TTypeToString(field.Type)}).");
+                    }
+                    {{#consolidate_newlines}}
+                    {{#i_4}}{{{deserialize_field}}}{{/i_4}}
+                    {{#field.required}}
+                    __is_{{name}}_set = true;
+                    {{/field.required}}
+                    {{/consolidate_newlines}}
+                    break;
+                {{/fields}}
+                default:
+                    TProtocolUtil.Skip(iprot, field.Type);
+                    break;
+            }
+            iprot.ReadFieldEnd();
+        }
+        iprot.ReadStructEnd();
+
+        // check for required fields of primitive type, which can't be checked in the validate method
+        {{#consolidate_newlines}}
+        {{#fields}}
+        {{#field.required}}
+        if (!__is_{{name}}_set)
+            throw new TProtocolException("Required field '{{name}}' was not found in serialized data! Struct: " + this.ToString());
+        {{/field.required}}
+        {{/fields}}
+        return new {{name}}(
+        {{#fields}}
+            {{name}}{{^last}},{{/last}}
+        {{/fields}}
+        );
+        {{/consolidate_newlines}}
+    }
+
+    public override void Encode({{name}} _item, TProtocol oprot) => _item.Write(oprot);
+    }
+}

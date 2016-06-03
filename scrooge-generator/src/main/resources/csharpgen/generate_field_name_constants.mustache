@@ -1,0 +1,85 @@
+/** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+public sealed class _Fields : TFieldIdEnum
+{
+    {{#fields}}
+    public static readonly _Fields {{#constant_name}}{{name}}{{/constant_name}} = new _Fields((short){{key}}, "{{name}}");
+    {{/fields}}
+
+    static readonly IDictionary<string, _Fields> byName = new Dictionary<string, _Fields>()
+    {
+        {{#fields}}
+        { "{{name}}", {{#constant_name}}{{name}}{{/constant_name}} }{{#last}}{{/last}}{{^last}},{{/last}}
+        {{/fields}}
+    };
+
+    /**
+     * Find the _Fields constant that matches fieldId, or null if its not found.
+     */
+    public static _Fields FindByThriftId(int fieldId)
+    {
+        switch(fieldId)
+        {
+            {{#fields}}
+            case {{key}}: // {{#constant_name}}{{name}}{{/constant_name}}
+                return _Fields.{{#constant_name}}{{name}}{{/constant_name}};
+            {{/fields}}
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Find the _Fields constant that matches fieldId, throwing an exception
+     * if it is not found.
+     */
+    public static _Fields FindByThriftIdOrThrow(int fieldId)
+    {
+        _Fields fields = FindByThriftId(fieldId);
+        if (fields == null) throw new InvalidOperationException("Field " + fieldId + " doesn't exist!");
+        return fields;
+    }
+
+    /**
+     * Find the _Fields constant that matches name, or null if its not found.
+     */
+    public static _Fields FindByName(String name)
+    {
+        _Fields field;
+        bool success = byName.TryGetValue(name, out field);
+        return success ? field : null;
+    }
+
+    public short ThriftFieldId { get; }
+    public string FieldName { get; }
+
+    _Fields(short thriftId, String fieldName)
+    {
+        this.ThriftFieldId = thriftId;
+        this.FieldName = fieldName;
+
+    }
+
+    protected bool Equals(_Fields other)
+    {
+        return this.ThriftFieldId == other.ThriftFieldId && string.Equals(this.FieldName, other.FieldName);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != this.GetType())
+            return false;
+        return Equals((_Fields)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            return (this.ThriftFieldId.GetHashCode() * 397) ^ (this.FieldName != null ? this.FieldName.GetHashCode() : 0);
+        }
+    }
+}

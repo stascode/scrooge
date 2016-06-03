@@ -1,0 +1,273 @@
+{{>autogen}}
+{{>package}}
+{
+    {{#i_4}}{{>type_imports}}{{/i_4}}
+    {{#i_4}}{{>thrift_imports}}{{/i_4}}
+    {{#i_4}}{{>service_imports}}{{/i_4}}
+
+    public class {{name}}
+    {
+        public interface ServiceIface{{#extends_iface}} : {{name}}.ServiceIface{{/extends_iface}}
+        {
+          {{#functions}}
+          Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}({{{argument_list_with_types}}});
+          {{/functions}}
+        }
+
+        public class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient, {{/extends_iface}}{{^extends_iface}} : {{/extends_iface}}ServiceIface
+        {
+            readonly Finagle.Core.Service<ThriftClientRequest, byte[]> service;
+            readonly TProtocolFactory protocolFactory;
+            {{^is_oneway}}
+            readonly Finagle.Core.Services.ResponseClassifier responseClassifier;
+
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory, Finagle.Core.Services.ResponseClassifier responseClassifier){{#extends_iface}} : base(service, protocolFactory, responseClassifier);{{/extends_iface}}
+            {
+                this.service = service;
+                this.protocolFactory = protocolFactory;
+                this.responseClassifier = responseClassifier;
+            }
+            {{/is_oneway}}
+
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory) {{#extends_iface}}: base(service, protocolFactory, Finagle.Core.Services.ResponseClassifier.Default());{{/extends_iface}}
+            {
+                this.service = service;
+                this.protocolFactory = protocolFactory;
+                {{^is_oneway}}this.responseClassifier = Finagle.Core.Services.ResponseClassifier.Default;{{/is_oneway}}
+            }
+
+            T DecodeResponse<T>(byte[] resBytes, ThriftStructCodec3<T> codec)
+                where T : ThriftStruct
+            {
+                var iprot = this.protocolFactory.GetProtocol(new TMemoryInputTransport(resBytes));
+                var msg = iprot.ReadMessageBegin();
+                try
+                {
+                    if (msg.Type == TMessageType.Exception)
+                        throw TApplicationException.Read(iprot); // todo: pass serviceName if it's ISourcedException
+                    return codec.Decode(iprot);
+                }
+                finally
+                {
+                    iprot.ReadMessageEnd();
+                }
+            }
+
+            static TApplicationException MissingResult(string name) => new TApplicationException(TApplicationException.ExceptionType.MissingResult, name + " failed: unknown result");
+
+            {{#functions}}
+            public async Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}({{{argument_list_with_types}}})
+            {
+                // TODO: size
+                TMemoryBuffer __memoryTransport__ = new TMemoryBuffer();
+                TProtocol __prot__ = this.protocolFactory.GetProtocol(__memoryTransport__);
+                __prot__.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, 0));
+                {{name}}_args __args__ = new {{name}}_args();
+                {{#fields}}
+                __args__.{{#cap}}{{name}}{{/cap}} = {{name}};
+                {{/fields}}
+                __args__.Write(__prot__);
+                __prot__.WriteMessageEnd();
+
+
+                byte[] __buffer__ = __memoryTransport__.GetBuffer();
+                ThriftClientRequest __request__ = new ThriftClientRequest(__buffer__, {{#is_oneway}}true{{/is_oneway}}{{^is_oneway}}false{{/is_oneway}});
+                {{^is_oneway_or_void}}
+                var serdeCtx = new DeserializeCtx<{{{return_type.type_name}}}>(__args__, buf => Decode{{name}}Response(buf));
+                __request__.LocalContext.Set(DeserializeCtx.Key, serdeCtx);
+                {{/is_oneway_or_void}}
+
+                var response = await this.service.Invoke(__request__);
+                {{^is_oneway_or_void}}
+                var result = serdeCtx.Deserialize(response);
+                var responseClass = this.responseClassifier.InvokeOrElse(
+                    new Finagle.Core.Services.ReqRep(__args__, result),
+                    Finagle.Core.Services.ResponseClassifier.Default);
+                // if (responseClass == Finagle.Core.Services.ResponseClass.Success)
+                // {
+                //     __stats_divide.SuccessCounter.incr()
+                // }
+                // else
+                // {
+                //     __stats_divide.FailuresCounter.incr();
+                //     if (result.IsThrow)
+                //     {
+                //         SetServiceName(ex);
+                //         __stats_divide.FailuresScope.counter(Throwables.mkString(ex): _*).incr();
+                //     }
+                // }
+                
+                return result.Value;
+                {{/is_oneway_or_void}}
+            }
+            {{^is_oneway_or_void}}
+
+            Finagle.Core.Util.Try<{{{return_type.type_name}}}> Decode{{name}}Response(byte[] response)
+            {
+                try
+                {
+                    var decodeResult = DecodeResponse(response, {{name}}_result.Codec);
+
+                    {{{return_type.type_name}}} res;
+                    if (decodeResult.Success.TryGet(out res))
+                        return Try.Return(res);
+                    {{#exceptions}}
+                    {{{field_type.type_name}}} __{{name}};
+                    if (decodeResult.{{#cap}}{{name}}{{/cap}}.TryGet(out __{{name}}))
+                        return Try.Throw<{{{return_type.type_name}}}>(__{{name}});
+                    {{/exceptions}}
+                    return Try.Throw<{{{return_type.type_name}}}>(MissingResult("{{name}}"));
+                }
+                catch (Exception ex) when (!ex.IsFatal())
+                {
+                    return Try.Throw<{{{return_type.type_name}}}>(ex);
+                }
+            }
+            {{/is_oneway_or_void}}
+            {{/functions}}
+        }
+
+        public class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.Core.Service<byte[], byte[]>{{/extends_iface}}
+        {
+            readonly ServiceIface iface;
+            readonly TProtocolFactory protocolFactory;
+
+            {{^extends_iface}}
+            protected IDictionary<string, Func<TProtocol, int, Task<byte[]>>> functionMap = new Dictionary<string, Func<TProtocol, int, Task<byte[]>>>();
+            {{/extends_iface}}
+
+            byte[] CreateException(string name, int seqid, TApplicationException.ExceptionType code, string message)
+            {
+                TApplicationException x = new TApplicationException(code, message);
+                TMemoryBuffer memoryBuffer = new TMemoryBuffer();
+                TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
+
+                oprot.WriteMessageBegin(new TMessage(name, TMessageType.Exception, seqid));
+                x.Write(oprot);
+                oprot.WriteMessageEnd();
+                oprot.Transport.Flush();
+                byte[] buffer = memoryBuffer.GetBuffer();
+                return buffer;
+            }
+
+            public Service(ServiceIface iface, TProtocolFactory protocolFactory){{#extends_iface}} : base(iface, protocolFactory){{/extends_iface}}
+            {
+                this.iface = iface;
+                this.protocolFactory = protocolFactory;
+                {{#functions}}
+                this.functionMap.Add("{{name}}", async (iprot, seqid) =>
+                {
+                    //todo: __stats_{{name}}.RequestsCounter.incr()
+                    {{name}}_args args;
+                    try
+                    {
+                        args = {{name}}_args.Codec.Decode(iprot);
+                        iprot.ReadMessageEnd();
+                    }
+                    catch (TProtocolException e)
+                    {
+                        iprot.ReadMessageEnd();
+                        return CreateException("{{name}}", seqid, TApplicationException.ExceptionType.ProtocolError, e.Message);
+                    }
+
+                    try
+                    {
+                        {{#is_oneway}}
+                        await iface.{{name}}({{{argument_list_with_args}}});
+                        // todo: __stats_{{name}}.SuccessCounter.incr();
+                        return new byte[0]; // todo: cache
+                        {{/is_oneway}}
+
+                        {{^is_oneway}}
+                        {{name}}_result result = new {{name}}_result();
+                        {{#exceptions.length}}
+                        try
+                        {
+                        {{/exceptions.length}}
+                            var value = await iface.{{name}}({{{argument_list_with_args}}});
+                            result.Success = value;
+                        {{#exceptions.length}}
+                        }
+                        {{#exceptions}}
+                        catch ({{{field_type.type_name}}} e)
+                        {
+                            result.{{#cap}}{{name}}{{/cap}} = e;
+                        }
+                        {{/exceptions}}
+                        {{/exceptions.length}}
+
+                        TMemoryBuffer memoryBuffer = new TMemoryBuffer();
+                        TProtocol oprot = protocolFactory.GetProtocol(memoryBuffer);
+
+                        oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Reply, seqid));
+                        result.Write(oprot);
+                        oprot.WriteMessageEnd();
+
+                        // todo: __stats_{{name}}.SuccessCounter.incr();
+                        return memoryBuffer.GetBuffer();
+                        {{/is_oneway}}
+                    }
+                    catch (Exception e)
+                    {
+                        // todo:
+                        // __stats_{{name}}.FailuresCounter.incr();
+                        // __stats_{{name}}.FailuresScope.counter(Throwables.mkString(ex): _*).incr();
+                        throw;
+                    }
+                });
+                {{/functions}}
+            }
+
+            public override Task<byte[]> Invoke(byte[] request)
+            {
+                TTransport inputTransport = new TMemoryInputTransport(request);
+                TProtocol iprot = this.protocolFactory.GetProtocol(inputTransport);
+
+                TMessage msg;
+                try
+                {
+                    msg = iprot.ReadMessageBegin();
+                }
+                catch (Exception e)
+                {
+                    return TaskEx.FromException<byte[]>(e);
+                }
+
+                Func<TProtocol, int, Task<byte[]>> fn;
+                bool success = this.functionMap.TryGetValue(msg.Name, out fn);
+                if (fn == null)
+                {
+                    try
+                    {
+                        TProtocolUtil.Skip(iprot, TType.Struct);
+                        iprot.ReadMessageEnd();
+                        TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.UnknownMethod, "Invalid method name: '"+msg.Name+"'");
+                        TMemoryBuffer memoryBuffer = new TMemoryBuffer();
+                        TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
+                        oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));
+                        x.Write(oprot);
+                        oprot.WriteMessageEnd();
+                        oprot.Transport.Flush();
+                        return Task.FromResult(memoryBuffer.GetBuffer());
+                    }
+                    catch (Exception e)
+                    {
+                        return TaskEx.FromException<byte[]>(e);
+                    }
+                }
+
+                return fn.Invoke(iprot, msg.SeqID);
+            }
+        }
+
+        {{#functions}}
+        {{{arg_struct}}}
+
+        {{^is_oneway}}
+        {{{result_struct}}}
+
+        {{/is_oneway}}
+
+        {{/functions}}
+    }
+}

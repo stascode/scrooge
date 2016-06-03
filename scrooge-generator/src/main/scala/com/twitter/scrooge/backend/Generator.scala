@@ -19,6 +19,7 @@ package com.twitter.scrooge.backend
 import com.twitter.scrooge.android_generator.AndroidGeneratorFactory
 import com.twitter.scrooge.ast._
 import com.twitter.scrooge.backend.lua.LuaGeneratorFactory
+import com.twitter.scrooge.csharp_generator.CsharpGeneratorFactory
 import com.twitter.scrooge.frontend.{ResolvedDocument, ScroogeInternalException}
 import com.twitter.scrooge.java_generator.ApacheJavaGeneratorFactory
 import com.twitter.scrooge.mustache.Dictionary.{NoValue, v}
@@ -63,7 +64,8 @@ object GeneratorFactory {
         ApacheJavaGeneratorFactory,
         AndroidGeneratorFactory,
         CocoaGeneratorFactory,
-        LuaGeneratorFactory
+        LuaGeneratorFactory,
+        CsharpGeneratorFactory
       ) ++
       loadedGenerators
 

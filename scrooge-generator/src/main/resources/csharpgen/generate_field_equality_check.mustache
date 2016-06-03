@@ -1,0 +1,15 @@
+{{#consolidate_newlines}}
+{{#field_type.nullable}}{{^field.optional}}
+bool this_{{name}}_absent = this.{{name}} == null;
+bool that_{{name}}_absent = that.{{name}} == null;
+{{/field.optional}}{{/field_type.nullable}}
+if ({{#trim}}{{#required_nullable}}((this_{{name}}_absent || that_{{name}}_absent) && (this_{{name}}_absent ^ that_{{name}}_absent)) || {{/required_nullable}}
+    {{#field_type.is_binary}}
+    !this.{{name}}.Equals(that.{{name}})) // todo: better binary comparison support
+    {{/field_type.is_binary}}
+    {{^field_type.is_binary}}
+    !this.{{name}}.Equals(that.{{name}})
+    {{/field_type.is_binary}}
+    {{/trim}})
+    return false;
+{{/consolidate_newlines}}

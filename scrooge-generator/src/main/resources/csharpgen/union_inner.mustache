@@ -1,0 +1,138 @@
+public abstract partial class {{name}} : TAbstractBase, IEquatable<{{name}}>, ThriftStruct
+{
+    {{#i_2}}{{>generate_struct_desc}}{{/i_2}}
+    {{#i_2}}{{>generate_field_descs}}{{/i_2}}
+
+    public abstract void Write(TProtocol protocol);
+    public abstract bool IsSet {get;}
+    public abstract object Data {get;}
+
+    public static {{name}} DeepCopy({{name}} other)
+    {
+        switch (other)
+        {
+            {{#fields}}
+            case {{struct_type_name}}.{{>cap_name}} x:
+                return {{struct_type_name}}.{{>cap_name}}.DeepCopy(x);
+            {{/fields}}
+            case {{name}}.___undefined _:
+                return other;
+            default:
+                throw new InvalidOperationException($"Unknown union subclass: {other.GetType()}");
+        }
+    }
+
+    public bool Equals({{name}} that) => this.Equals((object)that);
+
+    public sealed class ___undefined : {{name}}
+    {
+        public override bool IsSet => false;
+        public override object Data => null;
+        public override void Write(TProtocol protocol)
+        {
+            throw new TProtocolException( TProtocolException.INVALID_DATA, "Cannot persist an union type which is not set.");
+        }
+    }
+
+    {{#fields}}
+    public partial class {{>cap_name}} : {{{struct_type_name}}}, IEquatable<{{>cap_name}}>
+    {
+        readonly {{{field_type.type_name}}} {{name}};
+
+        public {{>cap_name}}({{{field_type.type_name}}} data)
+        {
+            this.{{name}} = data;
+        }
+
+        {{>cap_name}}({{>cap_name}} other)
+        {
+            {{>generate_field_deep_copy}}
+        }
+
+        public static {{>cap_name}} DeepCopy({{>cap_name}} other) => new {{>cap_name}}(other);
+
+        public {{{field_type.type_name}}} Value => this.{{name}};
+
+        public override bool IsSet => true;
+        public override object Data => this.{{name}};
+
+        public override bool Equals(object that) => this.Equals(that as {{>cap_name}});
+
+        public bool Equals({{>cap_name}} that)
+        {
+            if (that == null)
+                return false;
+            {{>generate_field_equality_check}}
+            return true;
+        }
+
+        public override void Write(TProtocol oprot)
+        {
+            oprot.WriteStructBegin(STRUCT_DESC);
+            oprot.WriteFieldBegin({{#constant_name}}{{name}}{{/constant_name}}_FIELD_DESC);
+
+            {{{serialize_field}}}
+
+            oprot.WriteFieldEnd();
+            oprot.WriteFieldStop();
+            oprot.WriteStructEnd();
+        }
+    }
+
+    {{/fields}}
+
+    public static readonly ThriftCodec Codec = new ThriftCodec();
+    
+    public partial class ThriftCodec: ThriftStructCodec3<{{name}}>
+    {
+
+
+        public override void Encode({{name}} t, TProtocol oprot) => t.Write(oprot);
+
+        public override {{name}} Decode(TProtocol iprot)
+        {
+            Number retval;
+            iprot.ReadStructBegin();
+            TField field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop)
+            {
+                iprot.ReadFieldEnd();
+                retval = new ___undefined();
+            }
+            else
+            {
+                switch (field.ID)
+                {
+                    {{#fields}}
+                    case {{key}}: // {{#constant_name}}{{name}}{{/constant_name}}
+                        if (field.Type == {{field_type.to_enum}})
+                        {
+                            {{{field_type.type_name}}} {{name}};
+                            {{#i_4}}{{{deserialize_field}}}{{/i_4}}
+                            // long temp;
+                            // temp = iprot.ReadI64();
+                            retval = new {{>cap_name}}({{name}});
+                        }
+                        else
+                        { 
+                            TProtocolUtil.Skip(iprot, field.Type);
+                            retval = new ___undefined();
+                        }
+                        break;
+                    {{/fields}}
+                    default: 
+                        TProtocolUtil.Skip(iprot, field.Type);
+                        retval = new ___undefined();
+                        break;
+                }
+                iprot.ReadFieldEnd();
+                if (iprot.ReadFieldBegin().Type != TType.Stop)
+                {
+                    throw new TProtocolException(TProtocolException.INVALID_DATA);
+                }
+            }
+            iprot.ReadStructEnd();
+            return retval;
+        }
+    }
+}

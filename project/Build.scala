@@ -12,7 +12,7 @@ import scoverage.ScoverageKeys
 
 object Scrooge extends Build {
   val branch = Process("git" :: "rev-parse" :: "--abbrev-ref" :: "HEAD" :: Nil).!!.trim
-  val suffix = if (branch == "master") "" else "-SNAPSHOT"
+  val suffix = if (branch == "csharp") "" else "-SNAPSHOT"
 
   val libVersion = "4.18.0" + suffix
 

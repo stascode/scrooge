@@ -1,0 +1,35 @@
+{{#consolidate_newlines}}
+{{#field_type.is_struct}}
+{{name}}.Write(oprot);
+{{/field_type.is_struct}}
+
+{{#field_type.is_container}}
+{
+    {{#deserialize_map_element}}
+    oprot.WriteMapBegin(new TMap({{{key_type.to_enum}}}, {{{val_type.to_enum}}}, {{name}}.Count));
+    foreach (KeyValuePair<{{{key_type.type_name_in_container}}}, {{{val_type.type_name_in_container}}}> {{tmp_iter}} in {{name}})
+    {
+        {{{serialize_key}}}
+        {{{serialize_val}}}
+    }
+    {{/deserialize_map_element}}
+
+    {{#deserialize_set_or_list_element}}
+    oprot.Write{{field_type.get_type}}Begin(new T{{field_type.get_type}}({{{elem_type.to_enum}}}, {{name}}.Count));
+    foreach ({{{elem_type.type_name}}} {{tmp_iter}} in {{name}})
+    {
+        {{{serialize_elem}}}
+    }
+    {{/deserialize_set_or_list_element}}
+    oprot.Write{{field_type.get_type}}End();
+}
+{{/field_type.is_container}}
+
+{{#field_type.is_base_type_or_binary}}
+oprot.Write{{field_type.get_type}}({{name}});
+{{/field_type.is_base_type_or_binary}}
+
+{{#field_type.is_enum}}
+oprot.WriteI32((int){{name}});
+{{/field_type.is_enum}}
+{{/consolidate_newlines}}

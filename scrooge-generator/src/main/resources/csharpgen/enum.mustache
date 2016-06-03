@@ -1,0 +1,10 @@
+{{>autogen}}
+{{>package}}
+{
+    public enum {{name}}
+    {
+        {{#constants}}
+        {{name}} = {{value}}{{#last}}{{/last}}{{^last}},{{/last}}
+        {{/constants}}
+    }
+}

@@ -1,0 +1,23 @@
+{{#field.optional}}
+{{{field_type.type_name}}} other_{{name}};
+if (other.{{name}}.TryGet(out other_{{name}}))
+{
+    {{#field_type.is_container}}
+    {{{generate_deep_copy_container}}}
+    this.{{name}} = Option.Some(__this__{{name}});
+    {{/field_type.is_container}}
+    {{^field_type.is_container}}
+    this.{{name}} = Option.Some({{{generate_deep_copy_non_container}}});
+    {{/field_type.is_container}}
+}
+{{/field.optional}}
+{{^field.optional}}
+var other_{{name}} = other.{{name}};
+{{#field_type.is_container}}
+{{{generate_deep_copy_container}}}
+this.{{name}} = __this__{{name}};
+{{/field_type.is_container}}
+{{^field_type.is_container}}
+this.{{name}} = {{{generate_deep_copy_non_container}}};
+{{/field_type.is_container}}
+{{/field.optional}}
