@@ -38,9 +38,8 @@ class CsharpGenerator(
     in_static: Boolean = false,
     defval: Boolean = false
   ): String = {
-    //val controller = new PrintConstController(name, fieldType, value, this, ns, in_static, defval)
-    //renderMustache("print_const.mustache", controller).trim
-    ""
+    val controller = new PrintConstController(name, fieldType, value, this, ns, in_static, defval)
+    renderMustache("print_const.mustache", controller).trim
   }
 
   def deepCopyContainer(
@@ -50,15 +49,14 @@ class CsharpGenerator(
     fieldType: FieldType,
     ns: Option[Identifier]
   ): String = {
-    //val controller = new DeepCopyController(
-    //  source_name_p1,
-    //  source_name_p2,
-    //  result_name,
-    //  fieldType,
-    //  this,
-    //  ns)
-    //renderMustache("generate_deep_copy_container.mustache", controller).trim
-    ""
+    val controller = new DeepCopyController(
+      source_name_p1,
+      source_name_p2,
+      result_name,
+      fieldType,
+      this,
+      ns)
+    renderMustache("generate_deep_copy_container.mustache", controller).trim
   }
 
   def deepCopyNonContainer(
@@ -66,9 +64,8 @@ class CsharpGenerator(
     fieldType: FieldType,
     ns: Option[Identifier]
   ): String = {
-    //val controller = new DeepCopyController(source_name, "", "", fieldType, this, ns)
-    //renderMustache("generate_deep_copy_noncontainer.mustache", controller).trim
-    ""
+    val controller = new DeepCopyController(source_name, "", "", fieldType, this, ns)
+    renderMustache("generate_deep_copy_noncontainer.mustache", controller).trim
   }
 
   def deserializeField(
@@ -77,9 +74,8 @@ class CsharpGenerator(
     ns: Option[Identifier],
     prefix: String = ""
   ): String = {
-    //val controller = new DeserializeFieldController(fieldType, fieldName, prefix, this, ns)
-    //renderMustache("generate_deserialize_field.mustache", controller).trim
-    ""
+    val controller = new DeserializeFieldController(fieldType, fieldName, prefix, this, ns)
+    renderMustache("generate_deserialize_field.mustache", controller).trim
   }
 
   def serializeField(
@@ -88,9 +84,8 @@ class CsharpGenerator(
     ns: Option[Identifier],
     prefix: String = ""
   ): String = {
-    //val controller = new SerializeFieldController(fieldType, fieldName, prefix, this, ns)
-    //renderMustache("generate_serialize_field.mustache", controller).trim
-    ""
+    val controller = new SerializeFieldController(fieldType, fieldName, prefix, this, ns)
+    renderMustache("generate_serialize_field.mustache", controller).trim
   }
 
   def fieldValueMetaData(fieldType: FieldType, ns: Option[Identifier]): String = {

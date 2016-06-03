@@ -2,15 +2,15 @@
 public class _Fields
 {
     {{#fields}}
-    public static {{#constant_name}}{{name}}{{/constant_name}} = new _Fields((short){{key}}, "{{name}}");
+    public static _Fields {{#constant_name}}{{name}}{{/constant_name}} = new _Fields((short){{key}}, "{{name}}");
     {{/fields}}
 
-    private static final IDictionary<string, _Fields> byName = new Dictionary<string, _Fields>
+    private static readonly IDictionary<string, _Fields> byName = new Dictionary<string, _Fields>()
     {
         {{#fields}}
         { "{{name}}", {{#constant_name}}{{name}}{{/constant_name}} }{{#last}}{{/last}}{{^last}},{{/last}}
         {{/fields}}
-    }
+    };
 
     /**
      * Find the _Fields constant that matches fieldId, or null if its not found.
@@ -21,7 +21,7 @@ public class _Fields
         {
             {{#fields}}
             case {{key}}: // {{#constant_name}}{{name}}{{/constant_name}}
-                return new _Fields((short){{key}}, "{{name}}");
+                return _Fields.{{#constant_name}}{{name}}{{/constant_name}};
             {{/fields}}
             default:
                 return null;
@@ -34,7 +34,7 @@ public class _Fields
      */
     public static _Fields FindByThriftIdOrThrow(int fieldId)
     {
-        _Fields fields = findByThriftId(fieldId);
+        _Fields fields = FindByThriftId(fieldId);
         if (fields == null) throw new InvalidOperationException("Field " + fieldId + " doesn't exist!");
         return fields;
     }
@@ -44,11 +44,13 @@ public class _Fields
      */
     public static _Fields FindByName(String name)
     {
-        return byName.get(name);
+        _Fields field;
+        bool success = byName.TryGetValue(name, out field);
+        return success ? field : null;
     }
 
-    readonly short ThriftId { get; }
-    readonly string FieldName;
+    public short ThriftId { get; }
+    public string FieldName { get; }
 
     _Fields(short thriftId, String fieldName)
     {

@@ -44,7 +44,7 @@ class FunctionController(function: TFunction, generator: CsharpGenerator, ns: Op
   val is_oneway_or_void = is_oneway || return_type.is_void
 
   def i_if_has_exceptions = newHelper { input =>
-    if (exceptions.size > 0) indent(input, 2, false) else input
+    if (exceptions.size > 0) indent(input, 4, false) else input
   }
 
   def arg_struct = {

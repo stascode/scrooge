@@ -1,0 +1,40 @@
+{{#consolidate_newlines}}
+{{{field_type.type_name_in_container}}} {{result_name}} = {{{field_type.init_field}}};
+{{#map_value}}
+foreach (KeyValuePair<{{{key_type.type_name_in_container}}}, {{{val_type.type_name_in_container}}}> {{iterator_element_name}} in {{source_name}}) {
+    {{{key_type.type_name_in_container}}} {{iterator_element_name}}_key = {{iterator_element_name}}.Key;
+    {{{val_type.type_name_in_container}}} {{iterator_element_name}}_value = {{iterator_element_name}}.Value;
+    {{#key_type.is_container}}
+    {{{generate_deep_copy_key_in_container}}}
+    {{/key_type.is_container}}
+    {{^key_type.is_container}}
+    {{{key_type.type_name_in_container}}} {{result_element_name}}_key = {{{generate_deep_copy_key_non_container}}};
+    {{/key_type.is_container}}
+    {{#val_type.is_container}}
+    {{{generate_deep_copy_val_in_container}}}
+    {{/val_type.is_container}}
+    {{^val_type.is_container}}
+    {{{val_type.type_name_in_container}}} {{result_element_name}}_value = {{{generate_deep_copy_val_non_container}}};
+    {{/val_type.is_container}}
+    {{result_name}}.Add({{result_element_name}}_key, {{result_element_name}}_value);
+}
+{{/map_value}}
+{{#list_or_set_value}}
+foreach ({{{elem_type.type_name_in_container}}} {{iterator_element_name}} in {{source_name}}) {
+    {{#elem_type.is_container}}
+    {{{generate_deep_copy_in_container}}}
+    {{result_name}}.Add({{result_element_name}});
+    {{/elem_type.is_container}}
+    {{^elem_type.is_container}}
+    {{#elem_type.is_binary}}
+    byte[] temp_binary_element = {{{generate_deep_copy_non_container}}};
+    ;
+    {{result_name}}.Add(temp_binary_element);
+    {{/elem_type.is_binary}}
+    {{^elem_type.is_binary}}
+    {{result_name}}.Add({{#newlines_to_spaces}}{{{generate_deep_copy_non_container}}}{{/newlines_to_spaces}});
+    {{/elem_type.is_binary}}
+    {{/elem_type.is_container}}
+}
+{{/list_or_set_value}}
+{{/consolidate_newlines}}

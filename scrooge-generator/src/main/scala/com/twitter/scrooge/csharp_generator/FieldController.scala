@@ -21,10 +21,10 @@ class FieldController(f: Field, generator: CsharpGenerator, ns: Option[Identifie
   }
 
   val i_if_nullable = newHelper { input =>
-    if (generator.isNullableType(f.fieldType)) indent(input, 2, false) else input
+    if (generator.isNullableType(f.fieldType)) indent(input, 4, false) else input
   }
 
   val i_if_optional = newHelper { input =>
-    if (optional) indent(input, 2, false) else input
+    if (optional) indent(input, 4, false) else input
   }
 }

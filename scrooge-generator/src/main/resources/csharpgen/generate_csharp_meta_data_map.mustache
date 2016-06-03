@@ -1,6 +1,6 @@
-public static readonly IDictionary<_Fields, FieldMetaData> MetaDataMap
+public static readonly IDictionary<_Fields, FieldMetaData> MetaDataMap = new Dictionary<_Fields, FieldMetaData>
 {
     {{#fields}}
     { _Fields.{{#constant_name}}{{name}}{{/constant_name}}, new FieldMetaData("{{name}}", {{field.requirement}}, {{{field_metadata}}}) }{{^last}},{{/last}}
     {{/fields}}
-}
+};

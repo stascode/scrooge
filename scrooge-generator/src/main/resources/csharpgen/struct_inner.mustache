@@ -22,7 +22,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {{/consolidate_newlines}}
 
     {{#i_4}}{{>generate_csharp_meta_data_map}}{{/i_4}}
-    public static {{name}}()
+    static {{name}}()
     {
         FieldMetaData.AddStructMetaDataMap(typeof({{name}}), MetaDataMap);
     }
@@ -120,14 +120,14 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
 
     {{#fields}}
     {{#field_type.is_container}}
-    public int get{{#cap}}{{name}}{{/cap}}Length()
+    public int get{{#cap}}{{name}}{{/cap}}Count()
     {
-        return (this.{{name}} == null) ? 0 : this.{{name}}.Length;
+        return (this.{{name}} == null) ? 0 : this.{{name}}.Count;
     }
 
     {{/field_type.is_container}}
     {{#field_type.is_list_or_set}}
-    public IEnumerable<{{{elem_type.type_name_in_container}}}> Get{{#cap}}{{name}}{{/cap}}Enumerator()
+    public IEnumerator<{{{elem_type.type_name_in_container}}}> Get{{#cap}}{{name}}{{/cap}}Enumerator()
     {
         return (this.{{name}} == null) ? null : this.{{name}}.GetEnumerator();
     }
@@ -149,7 +149,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {
             this.{{name}} = new {{{field_type.init_type_name}}}();
         }
-        this.{{name}}.Put(key, val);
+        this.{{name}}.Add(key, val);
     }
 
     {{/field_type.map_types}}
@@ -204,7 +204,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{/field_type.nullable}}
     }
 
-    public void Set{{#cap}}{{name}}{{/cap}}IsSet(boolean value)
+    public void Set{{#cap}}{{name}}{{/cap}}IsSet(bool value)
     {
         {{#field_type.nullable}}
         if (!value)
@@ -220,11 +220,11 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {{/fields}}
     public void SetFieldValue(_Fields field, object value)
     {
-        switch (field)
+        switch (field.ThriftId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
-            case _Fields.{{#constant_name}}{{name}}{{/constant_name}}.ThriftId
+            case {{key}}: // {{name}}
                 if (value == null)
                 {
                     this.Unset{{#cap}}{{name}}{{/cap}}();
@@ -241,11 +241,11 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
 
     public object GetFieldValue(_Fields field)
     {
-        switch (field)
+        switch (field.ThriftId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
-            case _Fields.{{#constant_name}}{{name}}{{/constant_name}}.ThriftId:
+            case {{key}}: // {{name}}
                 {{#field_type.is_base_type_not_string}}
                 return new {{{field_type.type_name_in_container}}}({{#field_type.boolean}}is{{/field_type.boolean}}{{^field_type.boolean}}get{{/field_type.boolean}}{{#cap}}{{name}}{{/cap}}());
                 {{/field_type.is_base_type_not_string}}
@@ -263,14 +263,14 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {
         if (field == null)
         {
-            throw new IllegalArgumentException();
+            throw new ArgumentException();
         }
 
-        switch (field)
+        switch (field.ThriftId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
-            case _Fields.{{#constant_name}}{{name}}{{/constant_name}}.ThriftId:
+            case {{key}}: // {{name}}
                 return {{>generate_isset_check}};
             {{/consolidate_newlines}}
             {{/fields}}
@@ -278,7 +278,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         throw new InvalidOperationException();
     }
 
-    public override bool Equals(Object that)
+    public override bool Equals(object that)
     {
         if (that == null)
             return false;
@@ -287,24 +287,24 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         return false;
     }
 
-    public override boolean Equals({{struct_type_name}} that)
+    public bool Equals({{struct_type_name}} that)
     {
         if (that == null)
             return false;
         {{#fields}}
         {{#consolidate_newlines}}
-        boolean this_present_{{name}} = true{{#field_type.nullable}} && this.{{>generate_isset_check}}{{/field_type.nullable}}{{^field_type.nullable}}{{#field.optional}} && this.{{>generate_isset_check}}{{/field.optional}}{{/field_type.nullable}};
-        boolean that_present_{{name}} = true{{#field_type.nullable}} && that.{{>generate_isset_check}}{{/field_type.nullable}}{{^field_type.nullable}}{{#field.optional}} && that.{{>generate_isset_check}}{{/field.optional}}{{/field_type.nullable}};
+        bool this_present_{{name}} = true{{#field_type.nullable}} && this.{{>generate_isset_check}}{{/field_type.nullable}}{{^field_type.nullable}}{{#field.optional}} && this.{{>generate_isset_check}}{{/field.optional}}{{/field_type.nullable}};
+        bool that_present_{{name}} = true{{#field_type.nullable}} && that.{{>generate_isset_check}}{{/field_type.nullable}}{{^field_type.nullable}}{{#field.optional}} && that.{{>generate_isset_check}}{{/field.optional}}{{/field_type.nullable}};
         if (this_present_{{name}} || that_present_{{name}})
         {
             if (!(this_present_{{name}} && that_present_{{name}}))
                 return false;
             if ({{#trim}}
               {{#field_type.is_binary}}
-              !this.{{name}}.equals(that.{{name}})
+              !this.{{name}}.Equals(that.{{name}})
               {{/field_type.is_binary}}
               {{^field_type.is_binary}}{{#field_type.nullable}}
-              !this.{{name}}.equals(that.{{name}})
+              !this.{{name}}.Equals(that.{{name}})
               {{/field_type.nullable}}{{/field_type.is_binary}}
               {{^field_type.is_binary}}{{^field_type.nullable}}
               this.{{name}} != that.{{name}}
@@ -323,7 +323,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{#gen_hash_code}}
         HashCodeBuilder builder = new HashCodeBuilder();
         {{#fields}}
-        boolean present_{{name}} = true{{#optional_or_nullable}} && ({{>generate_isset_check}}){{/optional_or_nullable}};
+        bool present_{{name}} = true{{#optional_or_nullable}} && ({{>generate_isset_check}}){{/optional_or_nullable}};
         builder.append(present_{{name}});
         if (present_{{name}})
             builder.append({{name}}{{#field_type.is_enum}}.getValue(){{/field_type.is_enum}});
@@ -335,61 +335,67 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{/gen_hash_code}}
     }
 
-    // public int CompareTo({{struct_type_name}} other) {
-    //   if (!getClass().equals(other.getClass())) {
-    //     return getClass().getName().compareTo(other.getClass().getName());
-    //   }
+    public int CompareTo({{struct_type_name}} other)
+    {
+        if (!this.GetType().Equals(other.GetType()))
+        {
+            return this.GetType().FullName.CompareTo(other.GetType().FullName);
+        }
 
-    //   int lastComparison = 0;
-    //   {{struct_type_name}} typedOther = ({{struct_type_name}})other;
+        int lastComparison = 0;
+        {{struct_type_name}} typedOther = ({{struct_type_name}})other;
 
-    //   {{#fields}}
-    //   lastComparison = Boolean.valueOf({{>generate_isset_check}}).compareTo(typedOther.{{>generate_isset_check}});
-    //   if (lastComparison != 0) {
-    //     return lastComparison;
-    //   }
-    //   if ({{>generate_isset_check}}) {
-    //     lastComparison = TBaseHelper.compareTo(this.{{name}}, typedOther.{{name}});
-    //     if (lastComparison != 0) {
-    //       return lastComparison;
-    //     }
-    //   }
-    //   {{/fields}}
-    //   return 0;
-    // }
+        {{#fields}}
+        lastComparison = Convert.ToInt32({{>generate_isset_check}}).CompareTo(typedOther.{{>generate_isset_check}});
+        if (lastComparison != 0)
+        {
+            return lastComparison;
+        }
+        if ({{>generate_isset_check}})
+        {
+            lastComparison = TBaseHelper.CompareTo(this.{{name}}, typedOther.{{name}});
+            if (lastComparison != 0)
+            {
+                return lastComparison;
+            }
+        }
+        {{/fields}}
+        return 0;
+    }
 
     {{#i_4}}{{>generate_csharp_struct_field_by_id}}{{/i_4}}
 
-    public void read(TProtocol iprot)
+    public void Read(TProtocol iprot)
     {
         TField field;
         iprot.ReadStructBegin();
         while (true)
         {
             field = iprot.ReadFieldBegin();
-            if (field.type == TType.STOP)
+            if (field.Type == TType.Stop)
             {
                 break;
             }
-            switch (field.id)
+            switch (field.ID)
             {
                 {{#fields}}
                 case {{key}}: // {{#constant_name}}{{name}}{{/constant_name}}
                     if (field.Type == {{field_type.to_enum}})
                     {
                         {{#consolidate_newlines}}
-                        {{{deserialize_field}}}
+                        {{#i_4}}{{{deserialize_field}}}{{/i_4}}
                         {{>generate_isset_set}}
                         {{/consolidate_newlines}}
                     }
                     else
                     {
-                        TProtocolUtil.skip(iprot, field.type);
+                        TProtocolUtil.Skip(iprot, field.Type);
                     }
                     break;
                 {{/fields}}
                 default:
-                    TProtocolUtil.skip(iprot, field.type);
+                    TProtocolUtil.Skip(iprot, field.Type);
+                    break;
             }
             iprot.ReadFieldEnd();
         }
@@ -418,7 +424,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{#first}}if{{/first}}{{^first}}} else if{{/first}} (this.{{>generate_isset_check}})
         {
             oprot.WriteFieldBegin({{#constant_name}}{{name}}{{/constant_name}}_FIELD_DESC);
-            {{{serialize_field}}}
+            {{#i_4}}{{{serialize_field}}}{{/i_4}}
             oprot.WriteFieldEnd();
         {{#last}}}{{/last}}
         {{/fields}}
@@ -434,18 +440,20 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         oprot.WriteStructBegin(STRUCT_DESC);
         {{#sorted_fields}}
         {{#field_type.nullable}}
-        if (this.{{name}} != null) {
+        if (this.{{name}} != null)
+        {
             {{/field_type.nullable}}
 
             {{#field.i_if_nullable}}
             {{#field.optional}}
-            if ({{>generate_isset_check}}) {
+            if ({{>generate_isset_check}})
+            {
                 {{/field.optional}}
 
                 {{#field.i_if_optional}}
                 oprot.WriteFieldBegin({{#constant_name}}{{name}}{{/constant_name}}_FIELD_DESC);
 
-                {{{serialize_field}}}
+                {{#i_4}}{{{serialize_field}}}{{/i_4}}
 
                 oprot.WriteFieldEnd();
 
@@ -471,7 +479,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {
         {{#consolidate_newlines}}
         var sb = new StringBuilder("{{name}}(");
-        boolean first = true;
+        bool first = true;
 
         {{#fields}}
         {{#field.optional}}

@@ -32,6 +32,7 @@ class FieldTypeController(fieldType: FunctionType, generator: CsharpGenerator) {
   }
   val is_list = fieldType.isInstanceOf[ListType]
   val is_map = fieldType.isInstanceOf[MapType]
+  val is_set = fieldType.isInstanceOf[SetType]
   def map_types = fieldType match {
     case MapType(k, v, _) =>
       Map("key_type" -> new FieldTypeController(k, generator), "value_type" -> new FieldTypeController(v, generator))
