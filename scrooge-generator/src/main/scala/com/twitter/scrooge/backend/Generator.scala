@@ -17,6 +17,7 @@ package com.twitter.scrooge.backend
  */
 
 import com.twitter.scrooge.ast._
+import com.twitter.scrooge.csharp_generator.CsharpGeneratorFactory
 import com.twitter.scrooge.frontend.{ResolvedDocument, ScroogeInternalException}
 import com.twitter.scrooge.java_generator.ApacheJavaGeneratorFactory
 import com.twitter.scrooge.mustache.Dictionary.CodeFragment
@@ -56,7 +57,8 @@ object GeneratorFactory {
         ScalaGeneratorFactory,
         ApacheJavaGeneratorFactory,
         AndroidGeneratorFactory,
-        CocoaGeneratorFactory
+        CocoaGeneratorFactory,
+        CsharpGeneratorFactory
       ) ++
       loadedGenerators
 
