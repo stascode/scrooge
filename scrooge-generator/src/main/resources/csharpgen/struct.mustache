@@ -1,0 +1,15 @@
+{{>autogen}}
+{{>package}}
+{
+    {{#i_4}}{{>type_imports}}{{/i_4}}
+    {{#i_4}}{{>thrift_imports}}{{/i_4}}
+
+// No additional import required for struct/union.
+
+{{! {{#is_union}}
+{{! {{>union_inner}}
+{{! {{/is_union}}
+{{! {{^is_union}}
+    {{#i_4}}{{>struct_inner}}{{/i_4}}
+{{! {{/is_union}}
+}

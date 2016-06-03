@@ -94,9 +94,8 @@ class CsharpGenerator(
   }
 
   def fieldValueMetaData(fieldType: FieldType, ns: Option[Identifier]): String = {
-    //val controller = new FieldValueMetadataController(fieldType, this, ns)
-    //renderMustache("generate_field_value_meta_data.mustache", controller).trim
-    ""
+    val controller = new FieldValueMetadataController(fieldType, this, ns)
+    renderMustache("generate_field_value_meta_data.mustache", controller).trim
   }
 
   def renderMustache(template: String, controller: Any = this): String = {
