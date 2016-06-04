@@ -45,7 +45,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{#non_optional_fields}}
         this.{{name}} = {{name}};
         {{^field_type.nullable}}
-        set{{#cap}}{{name}}{{/cap}}IsSet(true);
+        Set{{#cap}}{{name}}{{/cap}}IsSet(true);
         {{/field_type.nullable}}
         {{/non_optional_fields}}
     }
@@ -102,7 +102,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         this.{{name}} = null;
         {{/field_type.nullable}}
         {{^field_type.nullable}}
-        set{{#cap}}{{name}}{{/cap}}IsSet(false);
+        Set{{#cap}}{{name}}{{/cap}}IsSet(false);
         {{#field_type.double}}
         this.{{name}} = 0.0;
         {{/field_type.double}}
@@ -246,12 +246,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
             {{#fields}}
             {{#consolidate_newlines}}
             case {{key}}: // {{name}}
-                {{#field_type.is_base_type_not_string}}
-                return new {{{field_type.type_name_in_container}}}({{#field_type.boolean}}is{{/field_type.boolean}}{{^field_type.boolean}}get{{/field_type.boolean}}{{#cap}}{{name}}{{/cap}}());
-                {{/field_type.is_base_type_not_string}}
-                {{^field_type.is_base_type_not_string}}
                 return get{{#cap}}{{name}}{{/cap}}();
-                {{/field_type.is_base_type_not_string}}
             {{/consolidate_newlines}}
             {{/fields}}
         }
@@ -318,6 +313,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         return true;
     }
 
+    {{# gen_hash_code }}
     public override int GetHashCode()
     {
         {{#gen_hash_code}}
@@ -334,6 +330,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         return 0;
         {{/gen_hash_code}}
     }
+    {{/ gen_hash_code }}
 
     public int CompareTo({{struct_type_name}} other)
     {
