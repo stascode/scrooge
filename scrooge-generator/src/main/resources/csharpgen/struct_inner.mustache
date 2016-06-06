@@ -1,4 +1,4 @@
-public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TBase, IComparable<{{name}}>
+public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TBase/*, IComparable<{{name}}> */
 {
     {{#i_4}}{{>generate_struct_desc}}{{/i_4}}
     {{#i_4}}{{>generate_field_descs}}{{/i_4}}
@@ -24,7 +24,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {{#i_4}}{{>generate_csharp_meta_data_map}}{{/i_4}}
     static {{name}}()
     {
-        FieldMetaData.AddStructMetaDataMap(typeof({{name}}), MetaDataMap);
+        FieldMetaData.AddStructMetaDataMap(typeof({{name}}), (IDictionary<TFieldIdEnum, FieldMetaData>)MetaDataMap);
     }
 
     public {{name}}()
@@ -220,7 +220,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     {{/fields}}
     public void SetFieldValue(_Fields field, object value)
     {
-        switch (field.ThriftId)
+        switch (field.ThriftFieldId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
@@ -241,7 +241,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
 
     public object GetFieldValue(_Fields field)
     {
-        switch (field.ThriftId)
+        switch (field.ThriftFieldId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
@@ -261,7 +261,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
             throw new ArgumentException();
         }
 
-        switch (field.ThriftId)
+        switch (field.ThriftFieldId)
         {
             {{#fields}}
             {{#consolidate_newlines}}
@@ -320,11 +320,13 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         HashCodeBuilder builder = new HashCodeBuilder();
         {{#fields}}
         bool present_{{name}} = true{{#optional_or_nullable}} && ({{>generate_isset_check}}){{/optional_or_nullable}};
-        builder.append(present_{{name}});
+        builder.Append(present_{{name}});
         if (present_{{name}})
-            builder.append({{name}}{{#field_type.is_enum}}.getValue(){{/field_type.is_enum}});
+        {
+            builder.Append({{name}}{{#field_type.is_enum}}.getValue(){{/field_type.is_enum}});
+        }
         {{/fields}}
-        return builder.toHashCode();
+        return builder.GetHashCode();
         {{/gen_hash_code}}
         {{^gen_hash_code}}
         return 0;
@@ -332,6 +334,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
     }
     {{/ gen_hash_code }}
 
+/*
     public int CompareTo({{struct_type_name}} other)
     {
         if (!this.GetType().Equals(other.GetType()))
@@ -359,6 +362,7 @@ public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Except
         {{/fields}}
         return 0;
     }
+*/
 
     {{#i_4}}{{>generate_csharp_struct_field_by_id}}{{/i_4}}
 

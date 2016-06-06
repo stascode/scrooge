@@ -14,9 +14,9 @@ class FieldController(f: Field, generator: CsharpGenerator, ns: Option[Identifie
 
   def getRequirement(field: Field) = {
     field.requiredness match {
-      case Requiredness.Required => "TFieldRequirementType.REQUIRED"
-      case Requiredness.Optional => "TFieldRequirementType.OPTIONAL"
-      case _ => "TFieldRequirementType.DEFAULT"
+      case Requiredness.Required => "TFieldRequirementType.Required"
+      case Requiredness.Optional => "TFieldRequirementType.Optional"
+      case _ => "TFieldRequirementType.Default"
     }
   }
 
