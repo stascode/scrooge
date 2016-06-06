@@ -21,7 +21,7 @@
           {{/functions}}
         }
 
-        public class Client{{#extends_iface}} : {{name}}.Client{{/extends_iface}}, TServiceClient, Iface
+        public class Client{{#extends_iface}} : {{name}}.Client{{/extends_iface}}{{^extends_iface}} : TServiceClient, Iface{{/extends_iface}}
         {
             public class Factory : TServiceClientFactory<Client>
             {
@@ -35,33 +35,10 @@
                     return new Client(iprot, oprot);
                 }
             }
-
-            public Client(TProtocol prot) : this(prot, prot) { }
-
-            public Client(TProtocol iprot, TProtocol oprot){{#extends_iface}} : base(iprot, oprot){{/extends_iface}}
-            {
-                {{^extends_iface}}
-                iprot_ = iprot;
-                oprot_ = oprot;
-                {{/extends_iface}}
-            }
             {{^extends_iface}}
+            public Client(TProtocol prot) : base(prot) { }
 
-            protected TProtocol iprot_;
-            protected TProtocol oprot_;
-
-            protected int seqid_;
-
-            public TProtocol getInputProtocol()
-            {
-                return this.iprot_;
-            }
-
-            public TProtocol getOutputProtocol()
-            {
-                return this.oprot_;
-            }
-
+            public Client(TProtocol iprot, TProtocol oprot) : base(iprot, oprot) { }
             {{/extends_iface}}
             {{#functions}}
             public {{{return_type.type_name}}} {{name}}({{{argument_list_with_types}}})
@@ -74,38 +51,38 @@
 
             public void send_{{name}}({{{argument_list_with_types}}})
             {
-                this.oprot_.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, ++seqid_));
+                this.OutputProtocol.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, ++this.SeqId));
                 {{name}}_args __args__ = new {{name}}_args();
                 {{#fields}}
-                __args__.set{{#cap}}{{name}}{{/cap}}({{name}});
+                __args__.Set{{#cap}}{{name}}{{/cap}}({{name}});
                 {{/fields}}
-                __args__.Write(oprot_);
-                this.oprot_.WriteMessageEnd();
-                this.oprot_.Transport.flush();
+                __args__.Write(this.OutputProtocol);
+                this.OutputProtocol.WriteMessageEnd();
+                this.OutputProtocol.Transport.Flush();
             }
             {{^is_oneway}}
 
             public {{{return_type.type_name}}} recv_{{name}}()
             {
-                TMessage msg = this.iprot_.ReadMessageBegin();
+                TMessage msg = this.InputProtocol.ReadMessageBegin();
                 if (msg.Type == TMessageType.Exception)
                 {
-                    TApplicationException x = TApplicationException.Read(this.iprot_);
-                    this.iprot_.ReadMessageEnd();
+                    TApplicationException x = TApplicationException.Read(this.InputProtocol);
+                    this.InputProtocol.ReadMessageEnd();
                     throw x;
                 }
 
-                if (msg.SeqID != this.seqid_)
+                if (msg.SeqID != this.SeqId)
                 {
-                    throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "{{name}} failed: out of sequence response");
+                    throw new TApplicationException(TApplicationException.ExceptionType.BadSequenceID, "{{name}} failed: out of sequence response");
                 }
 
                 {{name}}_result result = new {{name}}_result();
-                result.Read(this.iprot_);
-                this.iprot_.ReadMessageEnd();
+                result.Read(this.InputProtocol);
+                this.InputProtocol.ReadMessageEnd();
 
                 {{^return_type.is_void}}
-                if (result.isSetSuccess())
+                if (result.IsSetSuccess())
                 {
                     return result.success;
                 }
@@ -128,14 +105,14 @@
             {{/functions}}
         }
 
-        public class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient{{/extends_iface}}, ServiceIface
+        public class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient, {{/extends_iface}}{{^extends_iface}} : {{/extends_iface}}ServiceIface
         {
             readonly Finagle.Core.Service<ThriftClientRequest, byte[]> service;
             readonly TProtocolFactory protocolFactory;
             {{^is_oneway}}
             /*private final scala.PartialFunction<com.twitter.finagle.service.ReqRep,com.twitter.finagle.service.ResponseClass> responseClassifier;*/
 
-            public ServiceToClient(com.twitter.finagle.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory/*, scala.PartialFunction<com.twitter.finagle.service.ReqRep,com.twitter.finagle.service.ResponseClass> responseClassifier*/){{#extends_iface}} : base(service, protocolFactory/*, responseClassifier*/);{{/extends_iface}}
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory/*, scala.PartialFunction<com.twitter.finagle.service.ReqRep,com.twitter.finagle.service.ResponseClass> responseClassifier*/){{#extends_iface}} : base(service, protocolFactory/*, responseClassifier*/);{{/extends_iface}}
             {
                 this.service = service;
                 this.protocolFactory = protocolFactory;
@@ -144,9 +121,9 @@
             {{/is_oneway}}
 
             /*
-            public ServiceToClient(com.twitter.finagle.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory)
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory)
             {
-                {{#extends_iface}}super(service, protocolFactory, com.twitter.finagle.service.ResponseClassifier.Default());{{/extends_iface}}
+                {{#extends_iface}}super(service, protocolFactory, Finagle.Core.Services.ResponseClassifier.Default());{{/extends_iface}}
                 this.service = service;
                 this.protocolFactory = protocolFactory;
                 {{^is_oneway}}this.responseClassifier = com.twitter.finagle.service.ResponseClassifier.Default();{{/is_oneway}}
@@ -158,12 +135,12 @@
             {
                 try {
                     // TODO: size
-                    TMemoryBuffer __memoryTransport__ = new TMemoryBuffer(512);
+                    TMemoryBuffer __memoryTransport__ = new TMemoryBuffer();
                     TProtocol __prot__ = this.protocolFactory.GetProtocol(__memoryTransport__);
                     __prot__.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, 0));
                     {{name}}_args __args__ = new {{name}}_args();
                     {{#fields}}
-                    __args__.set{{#cap}}{{name}}{{/cap}}({{name}});
+                    __args__.Set{{#cap}}{{name}}{{/cap}}({{name}});
                     {{/fields}}
                     __args__.Write(__prot__);
                     __prot__.WriteMessageEnd();
@@ -172,38 +149,38 @@
                     byte[] __buffer__ = __memoryTransport__.GetBuffer();
                     ThriftClientRequest __request__ = new ThriftClientRequest(__buffer__, {{#is_oneway}}true{{/is_oneway}}{{^is_oneway}}false{{/is_oneway}});
 
-                    return this.service.Invoke(__request__).FlatMap(__buffer__ =>
+                    return this.service.Invoke(__request__).FlatMap<byte[], {{{return_type.type_name_in_container}}}>(__buffer__1 =>
                     {
-                        TMemoryInputTransport __memoryTransport__ = new TMemoryInputTransport(__buffer__);
-                        TProtocol __prot__ = ServiceToClient.this.protocolFactory.getProtocol(__memoryTransport__);
+                        TMemoryInputTransport __memoryTransport__1 = new TMemoryInputTransport(__buffer__1);
+                        TProtocol __prot__1 = this.protocolFactory.GetProtocol(__memoryTransport__1);
                         try
                         {
                             {{#is_oneway_or_void}}
                             {{^is_oneway}}
-                            (new Client(__prot__)).recv_{{name}}();
+                            (new Client(__prot__1)).recv_{{name}}();
                             {{/is_oneway}}
                             return Task.FromResult(null);
                             {{/is_oneway_or_void}}
                             {{^is_oneway_or_void}}
-                            return Future.FromResult((new Client(__prot__)).recv_{{name}}());
+                            return Task.FromResult((new Client(__prot__1)).recv_{{name}}());
                             {{/is_oneway_or_void}}
                         }
                         catch (Exception e)
                         {
-                            return TaskEx.FromException(e);
+                            return TaskEx.FromException<{{{return_type.type_name_in_container}}}>(e);
                         }
 
                     });
                 }
                 catch (TException e)
                 {
-                    return Future.exception(e);
+                    return TaskEx.FromException<{{{return_type.type_name_in_container}}}>(e);
                 }
             }
             {{/functions}}
         }
 
-        public class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.CoreService<byte[], byte[]>{{/extends_iface}}
+        public class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.Core.Service<byte[], byte[]>{{/extends_iface}}
         {
             readonly ServiceIface iface;
             readonly TProtocolFactory protocolFactory;
@@ -219,7 +196,7 @@
                 {{#functions}}
                 this.functionMap.Add("{{name}}", (iprot, seqid) =>
                 {
-                    {{name}}_args args = new {{name}}_args();
+                    var args = new {{name}}_args();
                     try
                     {
                         args.Read(iprot);
@@ -230,33 +207,33 @@
                         {
                             iprot.ReadMessageEnd();
                             TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.ProtocolError, e.Message);
-                            TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                            TMemoryBuffer memoryBuffer = new TMemoryBuffer();
                             TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
 
                             oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Exception, seqid));
                             x.Write(oprot);
                             oprot.WriteMessageEnd();
-                            oprot.Transport.flush();
-                            byte[] buffer = memoryBuffer.GetBuffer(), 0, memoryBuffer.length());
+                            oprot.Transport.Flush();
+                            byte[] buffer = memoryBuffer.GetBuffer();
                             return Task.FromResult(buffer);
                         }
                         catch (Exception e1)
                         {
-                            return Future.exception(e1);
+                            return TaskEx.FromException<byte[]>(e1);
                         }
                     }
                     catch (Exception e)
                     {
-                        return TaskEx.FromException(e);
+                        return TaskEx.FromException<byte[]>(e);
                     }
 
                     try
                     {
-                        iprot.readMessageEnd();
+                        iprot.ReadMessageEnd();
                     }
                     catch (Exception e)
                     {
-                        return TaskEx.FromException(e);
+                        return TaskEx.FromException<byte[]>(e);
                     }
 
                     Task<{{{return_type.type_name_in_container}}}> future;
@@ -266,7 +243,7 @@
                     }
                     catch (Exception e)
                     {
-                        future = TaskEx.FromException(e);
+                        future = TaskEx.FromException<{{{return_type.type_name_in_container}}}>(e);
                     }
 
                     {{#is_oneway}}
@@ -280,12 +257,12 @@
                             {{name}}_result result = new {{name}}_result();
                             {{^is_oneway}}{{^return_type.is_void}}
                             result.success = value;
-                            result.setSuccessIsSet(true);
+                            result.SetSuccessIsSet(true);
                             {{/return_type.is_void}}{{/is_oneway}}
 
                             try
                             {
-                                TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                                TMemoryBuffer memoryBuffer = new TMemoryBuffer();
                                 TProtocol oprot = protocolFactory.GetProtocol(memoryBuffer);
 
                                 oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Reply, seqid));
@@ -296,7 +273,7 @@
                             }
                             catch (Exception e)
                             {
-                                return TaskEx.FromException(e);
+                                return TaskEx.FromException<byte[]>(e);
                             }
                         }).Rescue(t =>
                         {
@@ -311,40 +288,40 @@
                                 {{/exceptions}}
                                 else
                                 {
-                                    return TaskEx.FromException(t);
+                                    return TaskEx.FromException<byte[]>(t);
                                 }
-                                TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                                TMemoryBuffer memoryBuffer = new TMemoryBuffer();
                                 TProtocol oprot = protocolFactory.GetProtocol(memoryBuffer);
                                 oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Reply, seqid));
                                 result.Write(oprot);
                                 oprot.WriteMessageEnd();
-                                oprot.Transport.flush();
+                                oprot.Transport.Flush();
                                 return Task.FromResult(memoryBuffer.GetBuffer());
                             }
                             catch (Exception e)
                             {
-                                return Future.exception(e);
+                                return TaskEx.FromException<byte[]>(e);
                             }
                             {{/has_exceptions}}
                             {{^has_exceptions}}
-                            return Future.exception(t);
+                            return TaskEx.FromException<byte[]>(t);
                             {{/has_exceptions}}
                             {{/is_oneway}}
                             {{#is_oneway}}
-                            return Future.exception(t);
+                            return TaskEx.FromException<byte[]>(t);
                             {{/is_oneway}}
                         });
                     }
                     catch (Exception e)
                     {
-                        return Future.exception(e);
+                        return TaskEx.FromException<byte[]>(e);
                     }
                     {{/is_oneway}}
                 });
                 {{/functions}}
             }
 
-            public Task<byte[]> Invoke(byte[] request)
+            public override Task<byte[]> Invoke(byte[] request)
             {
                 TTransport inputTransport = new TMemoryInputTransport(request);
                 TProtocol iprot = this.protocolFactory.GetProtocol(inputTransport);
@@ -356,19 +333,19 @@
                 }
                 catch (Exception e)
                 {
-                    return TaskEx.FromException(e);
+                    return TaskEx.FromException<byte[]>(e);
                 }
 
-                Function2<TProtocol, Integer, Future<byte[]>> fn;
-                bool success = functionMap.TryGetValue(msg.name, out fn);
+                Func<TProtocol, int, Task<byte[]>> fn;
+                bool success = this.functionMap.TryGetValue(msg.Name, out fn);
                 if (fn == null)
                 {
                     try
                     {
-                        TProtocolUtil.skip(iprot, TType.Struct);
+                        TProtocolUtil.Skip(iprot, TType.Struct);
                         iprot.ReadMessageEnd();
-                        TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.UnknownType, "Invalid method name: '"+msg.Name+"'");
-                        TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                        TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.UnknownMethod, "Invalid method name: '"+msg.Name+"'");
+                        TMemoryBuffer memoryBuffer = new TMemoryBuffer();
                         TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
                         oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));
                         x.Write(oprot);
@@ -378,7 +355,7 @@
                     }
                     catch (Exception e)
                     {
-                        return TaskEx.FromException(e);
+                        return TaskEx.FromException<byte[]>(e);
                     }
                 }
 
