@@ -1,0 +1,399 @@
+{{>autogen}}
+{{>package}}
+{
+    {{#i_4}}{{>type_imports}}{{/i_4}}
+    {{#i_4}}{{>thrift_imports}}{{/i_4}}
+    {{#i_4}}{{>service_imports}}{{/i_4}}
+
+    public class {{name}}
+    {
+        public interface Iface{{#extends_iface}} : {{name}}.Iface{{/extends_iface}}
+        {
+          {{#functions}}
+          {{{return_type.type_name}}} {{name}}({{{argument_list_with_types}}});
+          {{/functions}}
+        }
+
+        public interface ServiceIface{{#extends_iface}} : {{name}}.ServiceIface{{/extends_iface}}
+        {
+          {{#functions}}
+          Task<{{{return_type.type_name_in_container}}}> {{name}}({{{argument_list_with_types}}});
+          {{/functions}}
+        }
+
+        public class Client{{#extends_iface}} : {{name}}.Client{{/extends_iface}}, TServiceClient, Iface
+        {
+            public class Factory : TServiceClientFactory<Client>
+            {
+                public Factory() {}
+                public Client GetClient(TProtocol prot)
+                {
+                    return new Client(prot);
+                }
+                public Client GetClient(TProtocol iprot, TProtocol oprot)
+                {
+                    return new Client(iprot, oprot);
+                }
+            }
+
+            public Client(TProtocol prot) : this(prot, prot) { }
+
+            public Client(TProtocol iprot, TProtocol oprot){{#extends_iface}} : base(iprot, oprot){{/extends_iface}}
+            {
+                {{^extends_iface}}
+                iprot_ = iprot;
+                oprot_ = oprot;
+                {{/extends_iface}}
+            }
+            {{^extends_iface}}
+
+            protected TProtocol iprot_;
+            protected TProtocol oprot_;
+
+            protected int seqid_;
+
+            public TProtocol getInputProtocol()
+            {
+                return this.iprot_;
+            }
+
+            public TProtocol getOutputProtocol()
+            {
+                return this.oprot_;
+            }
+
+            {{/extends_iface}}
+            {{#functions}}
+            public {{{return_type.type_name}}} {{name}}({{{argument_list_with_types}}})
+            {
+                send_{{name}}({{{argument_list}}});
+                {{^is_oneway}}
+                {{^return_type.is_void}}return {{/return_type.is_void}}recv_{{name}}();
+                {{/is_oneway}}
+            }
+
+            public void send_{{name}}({{{argument_list_with_types}}})
+            {
+                this.oprot_.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, ++seqid_));
+                {{name}}_args __args__ = new {{name}}_args();
+                {{#fields}}
+                __args__.set{{#cap}}{{name}}{{/cap}}({{name}});
+                {{/fields}}
+                __args__.Write(oprot_);
+                this.oprot_.WriteMessageEnd();
+                this.oprot_.Transport.flush();
+            }
+            {{^is_oneway}}
+
+            public {{{return_type.type_name}}} recv_{{name}}()
+            {
+                TMessage msg = this.iprot_.ReadMessageBegin();
+                if (msg.Type == TMessageType.Exception)
+                {
+                    TApplicationException x = TApplicationException.Read(this.iprot_);
+                    this.iprot_.ReadMessageEnd();
+                    throw x;
+                }
+
+                if (msg.SeqID != this.seqid_)
+                {
+                    throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID, "{{name}} failed: out of sequence response");
+                }
+
+                {{name}}_result result = new {{name}}_result();
+                result.Read(this.iprot_);
+                this.iprot_.ReadMessageEnd();
+
+                {{^return_type.is_void}}
+                if (result.isSetSuccess())
+                {
+                    return result.success;
+                }
+                {{/return_type.is_void}}
+
+                {{#exceptions}}
+                if (result.{{name}} != null)
+                {
+                    throw result.{{name}};
+                }
+                {{/exceptions}}
+                {{#return_type.is_void}}
+                return;
+                {{/return_type.is_void}}
+                {{^return_type.is_void}}
+                throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "{{name}} failed: unknown result");
+                {{/return_type.is_void}}
+            }
+            {{/is_oneway}}
+            {{/functions}}
+        }
+
+        public class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient{{/extends_iface}}, ServiceIface
+        {
+            readonly Finagle.Core.Service<ThriftClientRequest, byte[]> service;
+            readonly TProtocolFactory protocolFactory;
+            {{^is_oneway}}
+            /*private final scala.PartialFunction<com.twitter.finagle.service.ReqRep,com.twitter.finagle.service.ResponseClass> responseClassifier;*/
+
+            public ServiceToClient(com.twitter.finagle.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory/*, scala.PartialFunction<com.twitter.finagle.service.ReqRep,com.twitter.finagle.service.ResponseClass> responseClassifier*/){{#extends_iface}} : base(service, protocolFactory/*, responseClassifier*/);{{/extends_iface}}
+            {
+                this.service = service;
+                this.protocolFactory = protocolFactory;
+                /*this.responseClassifier = responseClassifier;*/
+            }
+            {{/is_oneway}}
+
+            /*
+            public ServiceToClient(com.twitter.finagle.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory)
+            {
+                {{#extends_iface}}super(service, protocolFactory, com.twitter.finagle.service.ResponseClassifier.Default());{{/extends_iface}}
+                this.service = service;
+                this.protocolFactory = protocolFactory;
+                {{^is_oneway}}this.responseClassifier = com.twitter.finagle.service.ResponseClassifier.Default();{{/is_oneway}}
+            }
+            */
+
+            {{#functions}}
+            public Task<{{{return_type.type_name_in_container}}}> {{name}}({{{argument_list_with_types}}})
+            {
+                try {
+                    // TODO: size
+                    TMemoryBuffer __memoryTransport__ = new TMemoryBuffer(512);
+                    TProtocol __prot__ = this.protocolFactory.GetProtocol(__memoryTransport__);
+                    __prot__.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Call, 0));
+                    {{name}}_args __args__ = new {{name}}_args();
+                    {{#fields}}
+                    __args__.set{{#cap}}{{name}}{{/cap}}({{name}});
+                    {{/fields}}
+                    __args__.Write(__prot__);
+                    __prot__.WriteMessageEnd();
+
+
+                    byte[] __buffer__ = __memoryTransport__.GetBuffer();
+                    ThriftClientRequest __request__ = new ThriftClientRequest(__buffer__, {{#is_oneway}}true{{/is_oneway}}{{^is_oneway}}false{{/is_oneway}});
+
+                    return this.service.Invoke(__request__).FlatMap(__buffer__ =>
+                    {
+                        TMemoryInputTransport __memoryTransport__ = new TMemoryInputTransport(__buffer__);
+                        TProtocol __prot__ = ServiceToClient.this.protocolFactory.getProtocol(__memoryTransport__);
+                        try
+                        {
+                            {{#is_oneway_or_void}}
+                            {{^is_oneway}}
+                            (new Client(__prot__)).recv_{{name}}();
+                            {{/is_oneway}}
+                            return Task.FromResult(null);
+                            {{/is_oneway_or_void}}
+                            {{^is_oneway_or_void}}
+                            return Future.FromResult((new Client(__prot__)).recv_{{name}}());
+                            {{/is_oneway_or_void}}
+                        }
+                        catch (Exception e)
+                        {
+                            return TaskEx.FromException(e);
+                        }
+
+                    });
+                }
+                catch (TException e)
+                {
+                    return Future.exception(e);
+                }
+            }
+            {{/functions}}
+        }
+
+        public class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.CoreService<byte[], byte[]>{{/extends_iface}}
+        {
+            readonly ServiceIface iface;
+            readonly TProtocolFactory protocolFactory;
+
+            {{^extends_iface}}
+            protected IDictionary<string, Func<TProtocol, int, Task<byte[]>>> functionMap = new Dictionary<string, Func<TProtocol, int, Task<byte[]>>>();
+            {{/extends_iface}}
+
+            public Service(ServiceIface iface, TProtocolFactory protocolFactory){{#extends_iface}} : base(iface, protocolFactory){{/extends_iface}}
+            {
+                this.iface = iface;
+                this.protocolFactory = protocolFactory;
+                {{#functions}}
+                this.functionMap.Add("{{name}}", (iprot, seqid) =>
+                {
+                    {{name}}_args args = new {{name}}_args();
+                    try
+                    {
+                        args.Read(iprot);
+                    }
+                    catch (TProtocolException e)
+                    {
+                        try
+                        {
+                            iprot.ReadMessageEnd();
+                            TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.ProtocolError, e.Message);
+                            TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                            TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
+
+                            oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Exception, seqid));
+                            x.Write(oprot);
+                            oprot.WriteMessageEnd();
+                            oprot.Transport.flush();
+                            byte[] buffer = memoryBuffer.GetBuffer(), 0, memoryBuffer.length());
+                            return Task.FromResult(buffer);
+                        }
+                        catch (Exception e1)
+                        {
+                            return Future.exception(e1);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        return TaskEx.FromException(e);
+                    }
+
+                    try
+                    {
+                        iprot.readMessageEnd();
+                    }
+                    catch (Exception e)
+                    {
+                        return TaskEx.FromException(e);
+                    }
+
+                    Task<{{{return_type.type_name_in_container}}}> future;
+                    try
+                    {
+                        future = iface.{{name}}({{{argument_list_with_args}}});
+                    }
+                    catch (Exception e)
+                    {
+                        future = TaskEx.FromException(e);
+                    }
+
+                    {{#is_oneway}}
+                    return future.Map(value => byte[0]);
+                    {{/is_oneway}}
+                    {{^is_oneway}}
+                    try
+                    {
+                        return future.FlatMap(value =>
+                        {
+                            {{name}}_result result = new {{name}}_result();
+                            {{^is_oneway}}{{^return_type.is_void}}
+                            result.success = value;
+                            result.setSuccessIsSet(true);
+                            {{/return_type.is_void}}{{/is_oneway}}
+
+                            try
+                            {
+                                TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                                TProtocol oprot = protocolFactory.GetProtocol(memoryBuffer);
+
+                                oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Reply, seqid));
+                                result.Write(oprot);
+                                oprot.WriteMessageEnd();
+
+                                return Task.FromResult(memoryBuffer.GetBuffer());
+                            }
+                            catch (Exception e)
+                            {
+                                return TaskEx.FromException(e);
+                            }
+                        }).Rescue(t =>
+                        {
+                            {{^is_oneway}}{{#has_exceptions}}
+                            try
+                            {
+                                {{name}}_result result = new {{name}}_result();
+                                {{#exceptions}}
+                                {{^first}}else {{/first}}if (t is {{{field_type.type_name}}}) {
+                                    result.{{name}} = ({{{field_type.type_name}}})t;
+                                }
+                                {{/exceptions}}
+                                else
+                                {
+                                    return TaskEx.FromException(t);
+                                }
+                                TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                                TProtocol oprot = protocolFactory.GetProtocol(memoryBuffer);
+                                oprot.WriteMessageBegin(new TMessage("{{name}}", TMessageType.Reply, seqid));
+                                result.Write(oprot);
+                                oprot.WriteMessageEnd();
+                                oprot.Transport.flush();
+                                return Task.FromResult(memoryBuffer.GetBuffer());
+                            }
+                            catch (Exception e)
+                            {
+                                return Future.exception(e);
+                            }
+                            {{/has_exceptions}}
+                            {{^has_exceptions}}
+                            return Future.exception(t);
+                            {{/has_exceptions}}
+                            {{/is_oneway}}
+                            {{#is_oneway}}
+                            return Future.exception(t);
+                            {{/is_oneway}}
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        return Future.exception(e);
+                    }
+                    {{/is_oneway}}
+                });
+                {{/functions}}
+            }
+
+            public Task<byte[]> Invoke(byte[] request)
+            {
+                TTransport inputTransport = new TMemoryInputTransport(request);
+                TProtocol iprot = this.protocolFactory.GetProtocol(inputTransport);
+
+                TMessage msg;
+                try
+                {
+                    msg = iprot.ReadMessageBegin();
+                }
+                catch (Exception e)
+                {
+                    return TaskEx.FromException(e);
+                }
+
+                Function2<TProtocol, Integer, Future<byte[]>> fn;
+                bool success = functionMap.TryGetValue(msg.name, out fn);
+                if (fn == null)
+                {
+                    try
+                    {
+                        TProtocolUtil.skip(iprot, TType.Struct);
+                        iprot.ReadMessageEnd();
+                        TApplicationException x = new TApplicationException(TApplicationException.ExceptionType.UnknownType, "Invalid method name: '"+msg.Name+"'");
+                        TMemoryBuffer memoryBuffer = new TMemoryBuffer(512);
+                        TProtocol oprot = this.protocolFactory.GetProtocol(memoryBuffer);
+                        oprot.WriteMessageBegin(new TMessage(msg.Name, TMessageType.Exception, msg.SeqID));
+                        x.Write(oprot);
+                        oprot.WriteMessageEnd();
+                        oprot.Transport.Flush();
+                        return Task.FromResult(memoryBuffer.GetBuffer());
+                    }
+                    catch (Exception e)
+                    {
+                        return TaskEx.FromException(e);
+                    }
+                }
+
+                return fn.Invoke(iprot, msg.SeqID);
+            }
+        }
+
+        {{#functions}}
+        {{{arg_struct}}}
+
+        {{^is_oneway}}
+        {{{result_struct}}}
+
+        {{/is_oneway}}
+
+        {{/functions}}
+    }
+}
