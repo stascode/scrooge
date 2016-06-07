@@ -8,7 +8,7 @@ import com.twitter.scrooge.ast.Struct
 class FunctionController(function: TFunction, generator: CsharpGenerator, ns: Option[Identifier])
   extends BaseController(generator, ns) {
   val return_type = new FieldTypeController(function.funcType, generator)
-  val name = function.funcName.name
+  val name = function.funcName.name.capitalize
   val argument_list = function.args map { a =>
     a.sid.name
   } mkString ", "
@@ -52,7 +52,7 @@ class FunctionController(function: TFunction, generator: CsharpGenerator, ns: Op
       val requiredness = if (a.requiredness.isRequired) Requiredness.Required else Requiredness.Default
       Field(a.index, a.sid, a.originalName, a.fieldType, a.default, requiredness)
     }
-    val structName = function.funcName.name + "_args"
+    val structName = function.funcName.name.capitalize + "_args"
     val struct = Struct(SimpleID(structName), structName, args, function.docstring, Map.empty)
     val controller = new StructController(struct, true, generator, ns)
     generator.renderMustache("struct_inner.mustache", controller)
@@ -65,7 +65,7 @@ class FunctionController(function: TFunction, generator: CsharpGenerator, ns: Op
       val fieldType = function.funcType.asInstanceOf[FieldType]
       Seq(Field(0, SimpleID("success"), "success", fieldType, None, Requiredness.Default))
     }) ++ function.throws
-    val struct = Struct(SimpleID(function.funcName.name + "_result"), function.originalName + "_result", fields, None, Map.empty)
+    val struct = Struct(SimpleID(function.funcName.name.capitalize + "_result"), function.originalName + "_result", fields, None, Map.empty)
     val controller = new StructController(struct, true, generator, ns, is_result = true)
     generator.renderMustache("struct_inner.mustache", controller)
   }
