@@ -91,7 +91,7 @@ public abstract partial class {{name}} : TAbstractBase, IEquatable<{{name}}>, Th
 
         public override {{name}} Decode(TProtocol iprot)
         {
-            Number retval;
+            {{name}} retval;
             iprot.ReadStructBegin();
             TField field = iprot.ReadFieldBegin();
             if (field.Type == TType.Stop)

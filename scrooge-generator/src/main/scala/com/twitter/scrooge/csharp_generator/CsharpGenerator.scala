@@ -9,7 +9,6 @@ import java.io.{File, FileWriter, StringWriter}
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
-
 object CsharpGeneratorFactory extends GeneratorFactory {
   val language = "csharp"
   private val templateCache = new TrieMap[String, Mustache]
@@ -215,7 +214,8 @@ class CsharpGenerator(
   def apply(
     serviceOptions: Set[ServiceOption],
     outputPath: File,
-    dryRun: Boolean = false
+    dryRun: Boolean = false,
+    genAdapt: Boolean = false
   ): Iterable[File] = {
     // TODO: Implement serviceOptions (WithFinagle, etc)
     val generatedFiles = new mutable.ListBuffer[File]

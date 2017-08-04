@@ -222,11 +222,27 @@ case class TypeResolver(
         ResolvedDefinition(
           resolved,
           withType(sid.name, StructType(resolved, scopePrefix)))
-      case u @ Union(sid, _, fs, _, _) =>
-        val resolved = u.copy(fields = fs.map(apply))
+      case s @ Union(sid, _, fs, _, _) =>
+        // Do not allow Structs with the same name as a Typedef
+        val resolver = if (typeMap.contains(sid.name)) {
+          val fieldType: FieldType = typeMap(sid.name)
+          if (fieldType != StructType(s, scopePrefix)) throw new DuplicatedIdentifierException(
+            s"Detected a duplicated identifier [${sid.name}] for differing types: Struct, ${typeMap(sid.name)}", s)
+          else this // return the current TypeResolver as we've already resolved this type
+        } else {
+          // Add the current struct name to the scope to allow self referencing types
+          // TODO: Enforce optional with self referenced field.
+          // For now, we'll depend on the language compiler to error out in those cases.
+          withType(sid.name, StructType(s, scopePrefix))
+        }
+        val resolved = s.copy(fields = fs.map(resolver.apply))
         ResolvedDefinition(
           resolved,
           withType(sid.name, StructType(resolved, scopePrefix)))
+//        val resolved = u.copy(fields = fs.map(apply))
+//        ResolvedDefinition(
+//          resolved,
+//          withType(sid.name, StructType(resolved, scopePrefix)))
       case e @ Exception_(sid, _, fs, _, _) =>
         val resolved = e.copy(fields = fs.map(apply))
         ResolvedDefinition(
