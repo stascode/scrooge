@@ -173,25 +173,25 @@
                     try
                     {
                         {{#is_oneway}}
-                        await iface.{{name}}({{{argument_list_with_args}}});
-                        // todo: __stats_{{name}}.SuccessCounter.incr();
+                        await iface.{{name}}({{{argument_list_with_args}}}); 
+                        // todo: __stats_{{name}}.SuccessCounter.incr() ;
                         return new byte[0]; // todo: cache
                         {{/is_oneway}}
 
                         {{^is_oneway}}
-                        {{name}}_result result = new {{name}}_result();
+                        var result = new {{name}}_result();
                         {{#exceptions.length}}
                         try
                         {
                         {{/exceptions.length}}
-                            var value = await iface.{{name}}({{{argument_list_with_args}}});
-                            result.Success = value;
+                        var value = await iface.{{name}}({{{argument_list_with_args}}});
+                        result.Success = Option.Some(value);
                         {{#exceptions.length}}
                         }
                         {{#exceptions}}
                         catch ({{{field_type.type_name}}} e)
                         {
-                            result.{{#cap}}{{name}}{{/cap}} = e;
+                            result.{{#cap}}{{name}}{{/cap}} = Option.Some(e);
                         }
                         {{/exceptions}}
                         {{/exceptions.length}}

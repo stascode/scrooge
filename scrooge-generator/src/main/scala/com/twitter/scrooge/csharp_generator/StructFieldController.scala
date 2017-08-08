@@ -21,8 +21,8 @@ class StructFieldController(
     indent(generator.deepCopyContainer("other_" + name, "", "__this__" + name, fieldType, ns), 4)
   val generate_deep_copy_non_container = generator.deepCopyNonContainer("other_" + name, fieldType, ns)
   val key = f.index
-  val field_metadata =  indent(generator.fieldValueMetaData(fieldType, ns), 6, addLast = false)
-  def deserialize_field = indent(generator.deserializeField(fieldType, name, ns, serializePrefix), 12)
+  val field_metadata =  indent(generator.fieldValueMetaData(fieldType, ns), 6, addLast = false) 
+  def deserialize_field = indent(generator.deserializeField(fieldType, name, ns, field.optional, serializePrefix), 12)
   def serialize_field = indent(generator.serializeField(fieldType, name, ns, serializePrefix), 4)
   def print_const =
     indent(generator.printConstValue("this." + name, fieldType, f.default.get, ns, in_static = true, defval = true), 4)

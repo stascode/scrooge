@@ -1,6 +1,6 @@
         {{#consolidate_newlines}}
         {{#field_type.is_struct}}
-        {{name}} = {{{field_type.type_name}}}.Codec.Decode(iprot);
+        {{name}} = {{#optional}}Option.Some<{{{field_type.type_name}}}>({{/optional}}{{{field_type.type_name}}}.Codec.Decode(iprot){{#optional}}){{/optional}};
         {{/field_type.is_struct}}
 
         {{#field_type.is_container}}
@@ -40,15 +40,15 @@
 
         }
         iprot.Read{{field_type.get_type}}End();
-        {{name}} = __{{name}};
+        {{name}} = {{#optional}}Option.Some<{{{field_type.type_name}}}>(__{{name}}){{/optional}}{{^optional}}__{{name}}{{/optional}};
         }
         {{/field_type.is_container}}
 
         {{#field_type.is_base_type_or_binary}}
-        {{name}} = iprot.Read{{field_type.get_type}}();
+        {{name}} = {{#optional}}Option.Some<{{{field_type.type_name}}}>({{/optional}}iprot.Read{{field_type.get_type}}(){{#optional}}){{/optional}};
         {{/field_type.is_base_type_or_binary}}
 
         {{#field_type.is_enum}}
-        {{name}} = ({{{field_type.type_name_in_container}}})(iprot.ReadI32());
+        {{name}} = {{#optional}}Option.Some({{/optional}}({{{field_type.type_name_in_container}}})iprot.ReadI32(){{#optional}}){{/optional}};
         {{/field_type.is_enum}}
         {{/consolidate_newlines}}

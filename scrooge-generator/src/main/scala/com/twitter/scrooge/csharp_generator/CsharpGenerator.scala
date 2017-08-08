@@ -71,9 +71,10 @@ class CsharpGenerator(
     fieldType: FieldType,
     fieldName: String,
     ns: Option[Identifier],
+    optional: Boolean,
     prefix: String = ""
   ): String = {
-    val controller = new DeserializeFieldController(fieldType, fieldName, prefix, this, ns)
+    val controller = new DeserializeFieldController(fieldType, fieldName, optional, prefix, this, ns)
     renderMustache("generate_deserialize_field.mustache", controller).trim
   }
 
