@@ -1,4 +1,4 @@
-public abstract partial class {{name}} : TAbstractBase, IEquatable<{{name}}>, ThriftStruct
+public abstract partial class {{name}} : TAbstractBase, IEquatable<{{name}}>, IThriftStruct, IThriftUnion
 {
     {{#i_2}}{{>generate_struct_desc}}{{/i_2}}
     {{#i_2}}{{>generate_field_descs}}{{/i_2}}

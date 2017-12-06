@@ -1,4 +1,4 @@
-public {{#is_final}}sealed {{/is_final}}class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TAbstractBase, ThriftStruct, IEquatable<{{name}}>
+public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TAbstractBase, IThriftStruct, IEquatable<{{name}}>
 {
     {{#fields}}
     {{>generate_optional_field_type}} {{name}};

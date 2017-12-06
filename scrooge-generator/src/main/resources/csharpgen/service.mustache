@@ -5,23 +5,23 @@
     {{#i_4}}{{>thrift_imports}}{{/i_4}}
     {{#i_4}}{{>service_imports}}{{/i_4}}
 
-    public class {{name}}
+    public partial class {{name}}
     {
         public interface ServiceIface{{#extends_iface}} : {{name}}.ServiceIface{{/extends_iface}}
         {
           {{#functions}}
-          Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}({{{argument_list_with_types}}});
+          Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}Async({{{argument_list_with_types}}});
           {{/functions}}
         }
 
-        public class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient, {{/extends_iface}}{{^extends_iface}} : {{/extends_iface}}ServiceIface
+        public partial class ServiceToClient{{#extends_iface}} : {{name}}.ServiceToClient, {{/extends_iface}}{{^extends_iface}} : {{/extends_iface}}ServiceIface
         {
             readonly Finagle.Core.Service<ThriftClientRequest, byte[]> service;
             readonly TProtocolFactory protocolFactory;
             {{^is_oneway}}
             readonly Finagle.Core.Services.ResponseClassifier responseClassifier;
 
-            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory, Finagle.Core.Services.ResponseClassifier responseClassifier){{#extends_iface}} : base(service, protocolFactory, responseClassifier);{{/extends_iface}}
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory, Finagle.Core.Services.ResponseClassifier responseClassifier){{#extends_iface}} : base(service, protocolFactory, responseClassifier){{/extends_iface}}
             {
                 this.service = service;
                 this.protocolFactory = protocolFactory;
@@ -29,7 +29,7 @@
             }
             {{/is_oneway}}
 
-            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory) {{#extends_iface}}: base(service, protocolFactory, Finagle.Core.Services.ResponseClassifier.Default());{{/extends_iface}}
+            public ServiceToClient(Finagle.Core.Service<ThriftClientRequest, byte[]> service, TProtocolFactory protocolFactory) {{#extends_iface}}: base(service, protocolFactory, Finagle.Core.Services.ResponseClassifier.Default){{/extends_iface}}
             {
                 this.service = service;
                 this.protocolFactory = protocolFactory;
@@ -37,7 +37,7 @@
             }
 
             T DecodeResponse<T>(byte[] resBytes, ThriftStructCodec3<T> codec)
-                where T : ThriftStruct
+                where T : IThriftStruct
             {
                 var iprot = this.protocolFactory.GetProtocol(new TMemoryInputTransport(resBytes));
                 var msg = iprot.ReadMessageBegin();
@@ -56,7 +56,7 @@
             static TApplicationException MissingResult(string name) => new TApplicationException(TApplicationException.ExceptionType.MissingResult, name + " failed: unknown result");
 
             {{#functions}}
-            public async Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}({{{argument_list_with_types}}})
+            public async Task{{^is_oneway_or_void}}<{{{return_type.type_name_in_container}}}>{{/is_oneway_or_void}} {{name}}Async({{{argument_list_with_types}}})
             {
                 // TODO: size
                 TMemoryBuffer __memoryTransport__ = new TMemoryBuffer();
@@ -127,7 +127,7 @@
             {{/functions}}
         }
 
-        public class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.Core.Service<byte[], byte[]>{{/extends_iface}}
+        public partial class Service {{#extends_iface}}: {{name}}.Service{{/extends_iface}}{{^extends_iface}}: Finagle.Core.Service<byte[], byte[]>{{/extends_iface}}
         {
             readonly ServiceIface iface;
             readonly TProtocolFactory protocolFactory;
@@ -173,7 +173,7 @@
                     try
                     {
                         {{#is_oneway}}
-                        await iface.{{name}}({{{argument_list_with_args}}}); 
+                        await iface.{{name}}Async({{{argument_list_with_args}}}); 
                         // todo: __stats_{{name}}.SuccessCounter.incr() ;
                         return new byte[0]; // todo: cache
                         {{/is_oneway}}
@@ -184,7 +184,7 @@
                         try
                         {
                         {{/exceptions.length}}
-                        var value = await iface.{{name}}({{{argument_list_with_args}}});
+                        var value = await iface.{{name}}Async({{{argument_list_with_args}}});
                         result.Success = Option.Some(value);
                         {{#exceptions.length}}
                         }
