@@ -36,7 +36,8 @@
                 {{^is_oneway}}this.responseClassifier = Finagle.Core.Services.ResponseClassifier.Default;{{/is_oneway}}
             }
 
-            T DecodeResponse<T>(byte[] resBytes, ThriftStructCodec3<T> codec)
+            {{^extends_iface}}
+            protected T DecodeResponse<T>(byte[] resBytes, ThriftStructCodec3<T> codec)
                 where T : IThriftStruct
             {
                 var iprot = this.protocolFactory.GetProtocol(new TMemoryInputTransport(resBytes));
@@ -52,6 +53,7 @@
                     iprot.ReadMessageEnd();
                 }
             }
+            {{/extends_iface}}
 
             static TApplicationException MissingResult(string name) => new TApplicationException(TApplicationException.ExceptionType.MissingResult, name + " failed: unknown result");
 

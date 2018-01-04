@@ -1,3 +1,4 @@
+{{#is_exception}}[Serializable]{{/is_exception}}
 public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exception}}Exception, {{/is_exception}}TAbstractBase, IThriftStruct, IEquatable<{{name}}>
 {
     {{#fields}}
