@@ -56,6 +56,22 @@ public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exceptio
 
     public static {{name}} DeepCopy({{name}} other) => new {{name}}(other);
 
+    {{#is_exception}}
+    protected {{name}}(SerializationInfo info, StreamingContext context)
+        : base(info, context)
+    {
+        // todo: deserialize from info
+    }
+
+    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    protected override void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        base.GetObjectData(info, context);
+
+        // todo: serialize into info
+    }
+    {{/is_exception}}
+
     {{#fields}}
     public {{>generate_optional_field_type}} {{>cap_name}}
     {
