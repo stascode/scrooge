@@ -64,7 +64,7 @@ public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exceptio
     }
 
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
-    protected override void GetObjectData(SerializationInfo info, StreamingContext context)
+    public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
         base.GetObjectData(info, context);
 
