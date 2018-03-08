@@ -82,9 +82,9 @@
                 var response = await this.service.Invoke(__request__);
                 {{^is_oneway_or_void}}
                 var result = serdeCtx.Deserialize(response);
-                var responseClass = this.responseClassifier.InvokeOrElse(
-                    new Finagle.Core.Services.ReqRep(__args__, result),
-                    Finagle.Core.Services.ResponseClassifier.Default);
+                // var responseClass = this.responseClassifier.InvokeOrElse(
+                //     new Finagle.Core.Services.ReqRep(__args__, result.Cast<object>()),
+                //     Finagle.Core.Services.ResponseClassifier.Default);
                 // if (responseClass == Finagle.Core.Services.ResponseClass.Success)
                 // {
                 //     __stats_divide.SuccessCounter.incr()
