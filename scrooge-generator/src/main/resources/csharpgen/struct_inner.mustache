@@ -70,6 +70,46 @@ public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exceptio
 
         // todo: serialize into info
     }
+
+    public {{name}}(string localMessage, Exception localInnerException)
+        : base(localMessage, localInnerException)
+    {
+        {{#consolidate_newlines}}
+        {{#default_fields}}
+        {{{print_const}}}
+        {{/default_fields}}
+        {{/consolidate_newlines}}
+    }
+
+    {{#has_fields}}
+    public {{name}}(
+      string localMessage,
+      Exception localInnerException,
+      {{#fields}}
+      {{>generate_optional_field_type}} {{name}}{{^last}},{{/last}}
+      {{/fields}}
+      ) : this(localMessage, localInnerException)
+    {
+        {{#fields}}
+        this.{{name}} = {{name}};
+        {{/fields}}
+    }
+
+    {{/has_fields}}
+    {{#non_default_constructor}}
+    public {{name}}(
+      string localMessage,
+      Exception localInnerException,
+      {{#non_optional_fields}}
+      {{{field_type.type_name}}} {{name}}{{^last}},{{/last}}{{#last}}) : this(localMessage, localInnerException){{/last}}
+      {{/non_optional_fields}}
+    {
+        {{#non_optional_fields}}
+        this.{{name}} = {{name}};
+        {{/non_optional_fields}}
+    }
+
+    {{/non_default_constructor}}
     {{/is_exception}}
 
     {{#fields}}
@@ -207,6 +247,10 @@ public {{#is_final}}sealed {{/is_final}} partial class {{name}} : {{#is_exceptio
         {{/field.i_if_optional}}
         {{/fields}}
         sb.Append(")");
+        {{#is_exception}}
+        sb.Append("\nbase exception:\n");
+        sb.Append(base.ToString());
+        {{/is_exception}}
         return sb.ToString();
         {{/consolidate_newlines}}
     }
